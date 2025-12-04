@@ -1,0 +1,10 @@
+# Ignore Docker MySQL data and logs
+docker/mysql/data/
+docker/mysql/log/
+
+# Ignore Nginx logs
+docker/nginx/log/
+
+# Ignore PHP logs
+docker/php/log/
+docker/php-fpm/log/
