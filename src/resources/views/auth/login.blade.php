@@ -5,7 +5,7 @@
 @endsection
 
 @section('title')
-ログイン画面
+ログイン画面（一般ユーザー）
 @endsection
 
 @section('content')
