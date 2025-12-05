@@ -28,3 +28,7 @@ Route::get('/register', function () {
 Route::get('email/verify', function () {
     return view('auth.verify-email');
 });
+
+Route::get('admin/login', function () {
+    return view('auth.admin.login');
+});
