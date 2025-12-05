@@ -5,7 +5,7 @@
 @endsection
 
 @section('title')
-会員登録画面
+会員登録画面（一般ユーザー）
 @endsection
 
 @section('content')
