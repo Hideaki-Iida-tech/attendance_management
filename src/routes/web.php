@@ -32,3 +32,9 @@ Route::get('email/verify', function () {
 Route::get('admin/login', function () {
     return view('auth.admin.login');
 });
+
+Route::get('/attendance', function () {
+    $layout = 'layouts.user-menu';
+    $status = 3; // 0:勤務外 1:出勤中 2:休憩中 3:退勤済
+    return view('attendance.register', compact('layout', 'status'));
+});

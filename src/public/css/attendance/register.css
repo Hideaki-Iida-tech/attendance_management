@@ -1,0 +1,127 @@
+/* メニューに関するスタイル */
+.header-button {
+    display: flex;
+}
+
+.header-button-attendance-register {
+    display: inline-block;
+    color: #FFF;
+    margin-left: 15px;
+    margin-right: 15px;
+    text-decoration: none;
+    font-size: 20px;
+}
+
+.header-button-attendance-list {
+    display: inline-block;
+    color: #FFF;
+    margin-left: 15px;
+    margin-right: 15px;
+    text-decoration: none;
+    font-size: 20px;
+}
+
+.header-button-request {
+    display: inline-block;
+    color: #FFF;
+    margin-left: 15px;
+    margin-right: 15px;
+    text-decoration: none;
+    font-size: 20px;
+}
+
+.header-button-logout {
+    background: #000;
+    color: #FFF;
+    margin-left: 15px;
+    margin-right: 15px;
+    border: none;
+    font-size: 20px;
+}
+
+/* メニュースタイル終わり。以下、コンテンツについてのスタイル */
+.attendance-register {
+    max-width: 1540px;
+    min-width: 1400px;
+    height: 700px;
+    display: flex;
+    justify-content: center;
+    background: #f0eff2;
+}
+
+.attendance-register-status {
+    display: flex;
+    justify-content: center;
+    margin: 150px 0 20px 0;
+}
+
+.status-value {
+    background: #C8C8C8;
+    border-radius: 20px;
+    padding: 8px 20px;
+}
+
+.attendance-register-date {
+    display: flex;
+    justify-content: center;
+    font-size: 30px;
+    margin: 10px 0 0 0;
+}
+
+.attendance-register-time {
+    display: flex;
+    justify-content: center;
+    font-size: 70px;
+    font-weight: bold;
+    margin: 40px 0 50px 0;
+}
+
+.attendance-register-button {
+    display: flex;
+    justify-content: center;
+}
+
+.attendance-button-clock-in {
+    width: 221px;
+    height: 77px;
+    font-size: 35px;
+    background: #000;
+    color: #FFF;
+    border-radius: 20px;
+    border: none;
+}
+
+.attendance-button-clock-out {
+    width: 221px;
+    height: 77px;
+    font-size: 35px;
+    background: #000;
+    color: #FFF;
+    border-radius: 20px;
+    border: none;
+    margin-right: 40px;
+}
+
+.attendance-button-break-start {
+    width: 221px;
+    height: 77px;
+    font-size: 35px;
+    background: #FFF;
+    color: #000;
+    border-radius: 20px;
+    border: none;
+    margin-left: 40px;
+}
+.attendance-button-break-end {
+    width: 221px;
+    height: 77px;
+    font-size: 35px;
+    background: #FFF;
+    color: #000;
+    border-radius: 20px;
+    border: none;
+}
+.end-message {
+    font-size: 30px;
+    font-weight: bold;
+}
