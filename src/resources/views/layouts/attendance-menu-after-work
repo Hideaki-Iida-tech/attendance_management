@@ -1,3 +1,4 @@
+@extends('layouts.app')
 @section('button')
 <div class="header-button">
 
