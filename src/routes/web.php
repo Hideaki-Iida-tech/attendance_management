@@ -38,3 +38,8 @@ Route::get('/attendance', function () {
     $status = 3; // 0:勤務外 1:出勤中 2:休憩中 3:退勤済
     return view('attendance.register', compact('layout', 'status'));
 });
+
+Route::get('/attendance/list', function () {
+    $layout = 'layouts.user-menu';
+    return view('attendance.list', compact('layout'));
+});
