@@ -43,3 +43,8 @@ Route::get('/attendance/list', function () {
     $layout = 'layouts.user-menu';
     return view('attendance.index', compact('layout'));
 });
+
+Route::get('/stamp_correction_request/list', function () {
+    $layout = 'layouts.user-menu';
+    return view('applications.index', compact('layout'));
+});
