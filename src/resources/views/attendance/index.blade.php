@@ -1,6 +1,6 @@
 @extends($layout)
 @push('css')
-<link rel="stylesheet" href="{{ asset('css/attendance/list.css') }}">
+<link rel="stylesheet" href="{{ asset('css/attendance/index.css') }}">
 @endpush
 
 @section('content')
