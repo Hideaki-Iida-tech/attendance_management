@@ -1,0 +1,84 @@
+.attendance-list {
+    max-width: 1540px;
+    min-width: 1400px;
+    background: #f0eff2;
+    border-top: 1px solid transparent;
+    padding-bottom: 100px;
+}
+
+.attendance-list-title {
+    margin: 50px auto 0 auto;
+    width: 900px;
+}
+
+.attendance-list-title-inner {
+    border-left: solid 8px #000;
+    padding-left: 20px;
+}
+
+.present-month-selector {
+    margin: 0 auto;
+    width: 900px;
+    display: flex;
+    justify-content: space-between;
+    background: #FFF;
+    border-radius: 15px;
+}
+
+.month-pre {
+    text-decoration: none;
+    color: grey;
+}
+
+.present-month {
+    font-weight: bold;
+}
+
+.calender-img {
+    margin-right: 10px;
+}
+
+.month-next {
+    text-decoration: none;
+    color: grey;
+}
+
+.attendance-list-content {
+    margin: 30px auto 0 auto;
+    width: 900px;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.attendance-list-table {
+    width: 100%;
+    border: none;
+    border-collapse: separate;
+    /* ← 行間を空けるため */
+    border-spacing: 0 2.5px;
+    border-radius: 10px;
+    color: grey;
+}
+
+.attendance-list-table-title {
+    width: 100%;
+    background: #FFF;
+    text-align: left;
+    height: 40px;
+}
+
+.attendance-list-table-row {
+    background: #FFF;
+    height: 40px;
+}
+
+.name-col {
+    width: 225px;
+    padding-left: 30px;
+}
+
+.detail-link {
+    color: #000;
+    text-decoration: none;
+    font-weight: bold;
+}

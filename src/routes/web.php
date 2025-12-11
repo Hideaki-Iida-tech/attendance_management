@@ -53,3 +53,8 @@ Route::get('attendance/{id}', function () {
     $layout = 'layouts.user-menu';
     return view('attendance.show', compact('layout'));
 });
+
+Route::get('admin/attendance/list', function () {
+    $layout = 'layouts.admin-menu';
+    return view('attendance.admin.index', compact('layout'));
+});
