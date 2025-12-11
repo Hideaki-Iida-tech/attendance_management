@@ -1,0 +1,87 @@
+.attendance-show {
+    max-width: 1540px;
+    min-width: 1400px;
+    background: #f0eff2;
+    border-top: 1px solid transparent;
+    padding-bottom: 100px;
+}
+
+.attendance-show-title {
+    margin: 50px auto 0 auto;
+    width: 900px;
+}
+
+.attendance-show-title-inner {
+    border-left: solid 8px #000;
+    padding-left: 20px;
+}
+
+.attendance-show-content {
+    margin: 30px auto 0 auto;
+    width: 900px;
+    border-radius: 15px;
+    overflow: hidden;
+}
+.attendance-show-table {
+    width: 100%;
+    border: none;
+    border-collapse: separate;
+    /* ← 行間を空けるため */
+    border-spacing: 0 2.5px;
+    border-radius: 10px;
+    color: #000;
+}
+
+.attendance-show-table-row {
+    background: #FFF;
+    height: 80px;
+}
+.attendance-show-table-col-title {
+    padding-left: 50px;
+    text-align:left;
+    width: 270px;
+    color: grey;
+    font-size: 20px;
+}
+.attendance-show-table-col-second {
+    width: 90px;
+    font-size: 20px;
+}
+.spacing {
+    padding-left: 15px;
+}
+.attendance-show-table-col-third {
+    width: 50px;
+    font-size: 20px;
+    padding-left: 10px;
+}
+.attendance-show-table-col-fourth {
+    width: 300px;
+    padding-right: 210px;
+    font-size: 20px;
+}
+.time-input {
+    width: 90px;
+    font-size: 20px;
+    text-align: center;
+}
+.remarks {
+    width: 270px;
+    font-size: 20px;
+    height: 60px;
+}
+.form-button {
+    margin: 0 auto;
+    width: 900px;
+    padding-top: 30px;
+    display: flex;
+    justify-content: flex-end;
+}
+.modify-button {
+    border-radius: 5px;
+    border: none;
+    background: #000;
+    color: #FFF;
+    width: 100px;
+    height: 40px;
+}
