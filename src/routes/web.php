@@ -78,3 +78,9 @@ Route::get('admin/attendance/staff/{id}', function () {
     $layout = 'layouts.admin-menu';
     return view('attendance/admin/staff', compact('layout'));
 });
+
+Route::get('stamp_correction_request/approve/{attendance_correct_request}', function () {
+    $layout = 'layouts.admin-menu';
+    $isApproved = false;
+    return view('applications/admin/approve', compact('layout', 'isApproved'));
+});
