@@ -73,3 +73,8 @@ Route::get('stamp_correction_request/list', function () {
     $layout = 'layouts.admin-menu';
     return view('applications.admin.index', compact('layout'));
 });
+
+Route::get('admin/attendance/staff/{id}', function () {
+    $layout = 'layouts.admin-menu';
+    return view('attendance/admin/staff', compact('layout'));
+});
