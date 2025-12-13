@@ -66,7 +66,7 @@ Route::get('/attendance/{id}', function () {
 
 Route::get('/admin/staff/list', function () {
     $layout = 'layouts.admin-menu';
-    return view('attendance.admin.staff', compact('layout'));
+    return view('staff.admin.index', compact('layout'));
 });
 
 Route::get('stamp_correction_request/list', function () {
