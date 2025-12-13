@@ -44,10 +44,10 @@ Route::get('/attendance/list', function () {
     return view('attendance.index', compact('layout'));
 });
 
-Route::get('/stamp_correction_request/list', function () {
+/*Route::get('/stamp_correction_request/list', function () {
     $layout = 'layouts.user-menu';
     return view('applications.index', compact('layout'));
-});
+});*/
 
 /*Route::get('/attendance/{id}', function () {
     $layout = 'layouts.user-menu';
@@ -67,4 +67,9 @@ Route::get('/attendance/{id}', function () {
 Route::get('/admin/staff/list', function () {
     $layout = 'layouts.admin-menu';
     return view('attendance.admin.staff', compact('layout'));
+});
+
+Route::get('stamp_correction_request/list', function () {
+    $layout = 'layouts.admin-menu';
+    return view('applications.admin.index', compact('layout'));
 });

@@ -1,0 +1,92 @@
+.applications-list {
+    max-width: 1540px;
+    min-width: 1400px;
+    background: #f0eff2;
+    border-top: 1px solid transparent;
+    padding-bottom: 100px;
+}
+
+.applications-tab {
+    margin: 50px auto 0 auto;
+    width: 900px;
+}
+
+.applications-tab a,
+.applications-tab a:visited,
+.applications-tab a:hover,
+.applications-tab a:active {
+    color: #000;
+}
+
+.applications-tab-pending {
+    margin-left: 50px;
+    margin-right: 50px;
+    text-decoration: none;
+}
+
+.applications-tab-approved {
+    margin-left: 50px;
+    text-decoration: none;
+}
+
+.applications-separator {
+    height: 2px;
+    margin: 20px auto 40px auto;
+    background-color: grey;
+    width: 900px;
+    border: none;
+}
+
+.applications-list-title {
+    margin: 50px auto 0 auto;
+    width: 900px;
+}
+
+.applications-list-title-inner {
+    border-left: solid 8px #000;
+    padding-left: 20px;
+}
+
+.applications-list-content {
+    margin: 30px auto 0 auto;
+    width: 900px;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.applications-list-table {
+    width: 100%;
+    border: none;
+    border-collapse: separate;
+    /* ← 行間を空けるため */
+    border-spacing: 0 2.5px;
+    border-radius: 10px;
+    color: grey;
+}
+
+.applications-list-table-title {
+    width: 100%;
+    background: #FFF;
+    text-align: left;
+    height: 40px;
+}
+
+.applications-list-table-row {
+    background: #FFF;
+    height: 40px;
+}
+
+.list-state {
+    width: 180px;
+    padding-left: 50px;
+}
+
+.list-state-content {
+    padding-left: 30px;
+}
+
+.detail-link {
+    color: #000;
+    text-decoration: none;
+    font-weight: bold;
+}
