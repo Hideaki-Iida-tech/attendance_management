@@ -1,0 +1,40 @@
+/* メニューに関するスタイル */
+.header-button {
+    display: flex;
+}
+
+.header-button-attendance-list {
+    display: inline-block;
+    color: #FFF;
+    margin-left: 15px;
+    margin-right: 15px;
+    text-decoration: none;
+    font-size: 20px;
+}
+
+.header-button-staff-list {
+    display: inline-block;
+    color: #FFF;
+    margin-left: 15px;
+    margin-right: 15px;
+    text-decoration: none;
+    font-size: 20px;
+}
+
+.header-button-request-list {
+    display: inline-block;
+    color: #FFF;
+    margin-left: 15px;
+    margin-right: 15px;
+    text-decoration: none;
+    font-size: 20px;
+}
+
+.header-button-logout {
+    background: #000;
+    color: #FFF;
+    margin-left: 15px;
+    margin-right: 15px;
+    border: none;
+    font-size: 20px;
+}

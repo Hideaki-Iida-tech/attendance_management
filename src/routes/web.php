@@ -25,11 +25,11 @@ Route::get('/register', function () {
     return view('auth.register');
 });
 
-Route::get('email/verify', function () {
+Route::get('/email/verify', function () {
     return view('auth.verify-email');
 });
 
-Route::get('admin/login', function () {
+Route::get('/admin/login', function () {
     return view('auth.admin.login');
 });
 
@@ -49,12 +49,17 @@ Route::get('/stamp_correction_request/list', function () {
     return view('applications.index', compact('layout'));
 });
 
-Route::get('attendance/{id}', function () {
+/*Route::get('/attendance/{id}', function () {
     $layout = 'layouts.user-menu';
     return view('attendance.show', compact('layout'));
-});
+});*/
 
-Route::get('admin/attendance/list', function () {
+Route::get('/admin/attendance/list', function () {
     $layout = 'layouts.admin-menu';
     return view('attendance.admin.index', compact('layout'));
+});
+
+Route::get('/attendance/{id}', function () {
+    $layout = 'layouts.admin-menu';
+    return view('attendance.admin.show', compact('layout'));
 });
