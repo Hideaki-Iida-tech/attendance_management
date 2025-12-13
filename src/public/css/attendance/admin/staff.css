@@ -1,0 +1,65 @@
+.staff-list {
+    max-width: 1540px;
+    min-width: 1400px;
+    background: #f0eff2;
+    border-top: 1px solid transparent;
+    padding-bottom: 100px;
+}
+
+.staff-list-title {
+    margin: 50px auto 0 auto;
+    width: 900px;
+}
+
+.staff-list-title-inner {
+    border-left: solid 8px #000;
+    padding-left: 20px;
+}
+
+.staff-list-content {
+    margin: 30px auto 0 auto;
+    width: 900px;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.staff-list-table {
+    width: 100%;
+    border: none;
+    border-collapse: separate;
+    /* ← 行間を空けるため */
+    border-spacing: 0 2.5px;
+    border-radius: 10px;
+    color: grey;
+}
+
+.staff-list-table-title {
+    width: 100%;
+    background: #FFF;
+    text-align: left;
+    height: 40px;
+}
+
+.staff-list-table-row {
+    background: #FFF;
+    height: 40px;
+}
+
+.staff-list-col-name {
+    width: 333px;
+    text-align: center;
+}
+.staff-list-col-email {
+    width: 333px;
+    text-align: center;
+}
+.staff-list-col-detail {
+    width: 333px;
+    text-align: center;
+}
+
+.detail-link {
+    color: #000;
+    text-decoration: none;
+    font-weight: bold;
+}
