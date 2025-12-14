@@ -36,9 +36,15 @@ return [
     */
 
     'guards' => [
+        // 一般ユーザーのガード
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
+        ],
+        // 管理者のガード
+        'admin' => [
+            'driver' => 'session',
+            'provider' => 'admins',
         ],
     ],
 
@@ -60,6 +66,7 @@ return [
     */
 
     'providers' => [
+        // 一般ユーザーが使用するmodelクラス
         'users' => [
             'driver' => 'eloquent',
             'model' => App\Models\User::class,
@@ -69,6 +76,12 @@ return [
         //     'driver' => 'database',
         //     'table' => 'users',
         // ],
+
+        // 管理者が使用するmodelクラス
+        'admins' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Admin::class,
+        ],
     ],
 
     /*
