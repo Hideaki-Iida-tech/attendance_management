@@ -4,7 +4,7 @@
 @endpush
 
 @section('title')
-勤怠詳細画面（一般ユーザー）
+修正申請承認画面（管理者）
 @endsection
 
 @section('content')

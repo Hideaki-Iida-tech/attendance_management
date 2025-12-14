@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
-@section('css')
+@push('css')
 <link rel="stylesheet" href="{{ asset('css/auth/register.css') }}">
-@endsection
+@endpush
 
 @section('title')
 会員登録画面（一般ユーザー）

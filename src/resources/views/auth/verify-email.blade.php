@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
-@section('css')
+@push('css')
 <link rel="stylesheet" href="{{ asset('css/auth/verify-email.css') }}">
-@endsection
+@endpush
 
 @section('title')
 メール認証誘導画面

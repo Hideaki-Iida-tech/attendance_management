@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('auth.login');
 });
 
 Route::get('/login', function () {
@@ -49,20 +49,20 @@ Route::get('/attendance/list', function () {
     return view('applications.index', compact('layout'));
 });*/
 
-/*Route::get('/attendance/{id}', function () {
+Route::get('/attendance/{id}', function () {
     $layout = 'layouts.user-menu';
     return view('attendance.show', compact('layout'));
-});*/
+});
 
 Route::get('/admin/attendance/list', function () {
     $layout = 'layouts.admin-menu';
     return view('attendance.admin.index', compact('layout'));
 });
 
-Route::get('/attendance/{id}', function () {
+/*Route::get('/attendance/{id}', function () {
     $layout = 'layouts.admin-menu';
     return view('attendance.admin.show', compact('layout'));
-});
+});*/
 
 Route::get('/admin/staff/list', function () {
     $layout = 'layouts.admin-menu';
