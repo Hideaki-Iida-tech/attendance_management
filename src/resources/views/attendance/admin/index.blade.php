@@ -14,9 +14,9 @@
         <h1 class="attendance-list-title-inner">2025年12月11日の勤怠一覧</h1>
     </div>
     <div class="present-month-selector">
-        <p><a href="" class="month-pre">←前月</a></p>
+        <p><a href="" class="month-pre">←前日</a></p>
         <p class="present-month"><img src="{{asset('images/calendar.png')}}" alt="" class="calender-img">2025/12</p>
-        <p><a href="" class="month-next">次月→</a></p>
+        <p><a href="" class="month-next">翌日→</a></p>
     </div>
 
     <div class="attendance-list-content">

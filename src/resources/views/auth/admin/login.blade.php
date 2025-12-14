@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
-@section('css')
+@push('css')
 <link rel="stylesheet" href="{{ asset('css/auth/admin/login.css') }}">
-@endsection
+@endpush
 
 @section('title')
 ログイン画面（管理者）

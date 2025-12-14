@@ -69,6 +69,7 @@
     width: 270px;
     font-size: 20px;
     height: 60px;
+    resize: none;
 }
 .form-button {
     margin: 0 auto;

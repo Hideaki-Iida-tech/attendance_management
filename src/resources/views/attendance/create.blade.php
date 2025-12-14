@@ -3,6 +3,10 @@
 <link rel="stylesheet" href="{{ asset('css/attendance/create.css') }}">
 @endpush
 
+@section('title')
+勤怠登録画面（一般ユーザー）
+@endsection
+
 @section('content')
 <div class="attendance-register">
     <form action="" class="attendance-register-form" method="">

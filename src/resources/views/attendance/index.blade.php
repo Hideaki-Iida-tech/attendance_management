@@ -3,6 +3,10 @@
 <link rel="stylesheet" href="{{ asset('css/attendance/index.css') }}">
 @endpush
 
+@section('title')
+勤怠一覧画面（一般ユーザー）
+@endsection
+
 @section('content')
 
 @php
