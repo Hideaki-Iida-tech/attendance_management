@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\Auth\LoginController as AdminLoginController;
 
 /*
 |--------------------------------------------------------------------------
@@ -83,4 +84,20 @@ Route::get('stamp_correction_request/approve/{attendance_correct_request}', func
     $layout = 'layouts.admin-menu';
     $isApproved = false;
     return view('applications/admin/approve', compact('layout', 'isApproved'));
+});
+
+Route::prefix('admin')->name('admin')->group(function () {
+    // 管理者としてログインしていない場合
+    Route::middleware('guest:admin')->group(function () {
+        Route::get('/login', [AdminLoginController::class, 'showLoginForm'])->name('login');
+        Route::post('/login', [AdminLoginController::class, 'login'])->name('login.store');
+    });
+
+    // 管理者としてログインしている場合のログアウト処理
+    Route::post('/logout', [AdminLoginController::class, 'logout'])->middleware('auth:admin')->name('logout');
+
+    // /にアクセスした場合
+    Route::middleware('auth:admin')->group(function () {
+        Route::get('/', []);
+    });
 });
