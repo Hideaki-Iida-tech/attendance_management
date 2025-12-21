@@ -12,15 +12,27 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Fortify;
+use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
+use App\Http\Responses\LoginResponse;
 
 class FortifyServiceProvider extends ServiceProvider
 {
     /**
-     * Register any application services.
+     * Fortify の LoginResponse をアプリ独自の実装に差し替える。
+     *
+     * ログイン成功後のレスポンス処理をカスタマイズするため、
+     * Fortify が利用する LoginResponseContract に対して
+     * 独自実装の LoginResponse を singleton としてバインドする。
+     *
+     * これにより、ログイン元（一般 / 管理者）や
+     * ユーザー権限に応じたリダイレクト制御を
+     * Fortify の認証フロー内で一元的に行う。
+     *
+     * @return void
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(LoginResponseContract::class, LoginResponse::class);
     }
 
     /**

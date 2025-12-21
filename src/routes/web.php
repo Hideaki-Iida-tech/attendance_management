@@ -13,74 +13,83 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// 一般ユーザー用ログイン画面の表示ルート
 Route::get('/', function () {
     return view('auth.login');
 });
 
+// 一般ユーザー用ログイン画面の表示ルート
 Route::get('/login', function () {
     return view('auth.login');
-});
+})->name('login');
 
+// 一般ユーザーの会員登録画面表示ルート
 Route::get('/register', function () {
     return view('auth.register');
 });
 
+// メール認証誘導画面表示用ルート
 Route::get('/email/verify', function () {
     return view('auth.verify-email');
 });
 
+// 管理者用ログイン画面表示ルート
 Route::get('/admin/login', function () {
     return view('auth.admin.login');
 });
 
-Route::get('/attendance', function () {
-    $layout = 'layouts.user-menu';
-    $status = 3; // 0:勤務外 1:出勤中 2:休憩中 3:退勤済
-    return view('attendance.create', compact('layout', 'status'));
+// 一般ユーザーの場合の画面表示ルート
+Route::middleware(['auth'])->group(function () {
+
+    // 勤怠登録画面（一般ユーザー）の表示ルート
+    Route::get('/attendance', function () {
+        $layout = 'layouts.user-menu';
+        $status = 3; // 0:勤務外 1:出勤中 2:休憩中 3:退勤済
+        return view('attendance.create', compact('layout', 'status'));
+    })->name('attendance.index');
+
+    // 勤怠一覧画面（一般ユーザー）の表示ルート
+    Route::get('/attendance/list', function () {
+        $layout = 'layouts.user-menu';
+        return view('attendance.index', compact('layout'));
+    })->name('attendance.list');
 });
 
-Route::get('/attendance/list', function () {
-    $layout = 'layouts.user-menu';
-    return view('attendance.index', compact('layout'));
+// パスにadmin/が含まれている場合のルート（すべて管理者の場合）
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+
+    // 勤怠一覧画面（管理者）の表示ルート
+    Route::get('/attendance/list', function () {
+        $layout = 'layouts.admin-menu';
+        return view('attendance.admin.index', compact('layout'));
+    });
+
+    // スタッフ一覧画面（管理者）の表示ルート
+    Route::get('/staff/list', function () {
+        $layout = 'layouts.admin-menu';
+        return view('staff.admin.index', compact('layout'));
+    });
+
+    // スタッフ別勤怠一覧画面（管理者）の表示ルート
+    Route::get('/attendance/staff/{id}', function () {
+        $layout = 'layouts.admin-menu';
+        return view('attendance/admin/staff', compact('layout'));
+    });
 });
 
-/*Route::get('/stamp_correction_request/list', function () {
-    $layout = 'layouts.user-menu';
-    return view('applications.index', compact('layout'));
-});*/
+// パスにadmin/が含まれていない場合のルート（すべて管理者の場合）
+Route::middleware(['auth', 'admin'])->group(function () {
 
-Route::get('/attendance/{id}', function () {
-    $layout = 'layouts.user-menu';
-    return view('attendance.show', compact('layout'));
+    // 修正申請承認画面（管理者）の表示ルート
+    Route::get('/stamp_correction_request/approve/{attendance_correct_request}', function () {
+        $layout = 'layouts.admin-menu';
+        $isApproved = false;
+        return view('applications/admin/approve', compact('layout', 'isApproved'));
+    });
 });
 
-Route::get('/admin/attendance/list', function () {
-    $layout = 'layouts.admin-menu';
-    return view('attendance.admin.index', compact('layout'));
-});
+// 管理者かどうかによって、勤怠詳細画面（管理者/一般ユーザー）の表示を切り替えるルート
+Route::middleware(['auth', 'role.view'])->get('/attendance/{id}', fn() => abort(500));
 
-/*Route::get('/attendance/{id}', function () {
-    $layout = 'layouts.admin-menu';
-    return view('attendance.admin.show', compact('layout'));
-});*/
-
-Route::get('/admin/staff/list', function () {
-    $layout = 'layouts.admin-menu';
-    return view('staff.admin.index', compact('layout'));
-});
-
-Route::get('stamp_correction_request/list', function () {
-    $layout = 'layouts.admin-menu';
-    return view('applications.admin.index', compact('layout'));
-});
-
-Route::get('admin/attendance/staff/{id}', function () {
-    $layout = 'layouts.admin-menu';
-    return view('attendance/admin/staff', compact('layout'));
-});
-
-Route::get('stamp_correction_request/approve/{attendance_correct_request}', function () {
-    $layout = 'layouts.admin-menu';
-    $isApproved = false;
-    return view('applications/admin/approve', compact('layout', 'isApproved'));
-});
+// 管理者かどうかによって、申請一覧画面（管理者/一般ユーザー）の表示を切り替えるルート
+Route::middleware(['auth', 'role.view'])->get('/stamp_correction_request/list', fn() => abort(500));

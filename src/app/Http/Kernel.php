@@ -63,5 +63,9 @@ class Kernel extends HttpKernel
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        // 管理者の場合のガード用ミドルウェアを登録
+        'admin' => \App\Http\Middleware\AdminMiddleware::class,
+        // 管理者か一般ユーザーかで表示画面を切り替えるミドルウェアの登録
+        'role.view' => \App\Http\Middleware\RoleViewSwitchMiddleware::class,
     ];
 }
