@@ -10,7 +10,7 @@
 
 @section('content')
 <div class="login-form">
-    <form action="/admin/login" class="login-form-inner" method="post" novalidate>
+    <form action="/login" class="login-form-inner" method="post" novalidate>
         @csrf
         <table class="login-form-table">
 
@@ -22,6 +22,7 @@
 
             <tr class="login-form-row">
                 <td>
+                    <input type="hidden" name="login_context" value="admin" />
                     <label class="login-form-label">メールアドレス<br />
                         <input type="email" class="login-input" name="email" value="{{ old('email') }}" />
                     </label>

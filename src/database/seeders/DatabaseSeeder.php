@@ -14,5 +14,7 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         // \App\Models\User::factory(10)->create();
+        // 管理者を登録するシーダーAdminUesrSeederを登録
+        $this->call(AdminUserSeeder::class);
     }
 }
