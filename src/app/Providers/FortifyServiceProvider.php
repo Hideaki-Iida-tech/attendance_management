@@ -149,34 +149,23 @@ class FortifyServiceProvider extends ServiceProvider
     /**
      * ログインフォームの文脈からユーザー権限を解決する。
      *
-     * ログイン時に送信される login_context の値に応じて、
-     * 管理者用ログインか一般ユーザー用ログインかを判定し、
-     * 対応する UserRole を返す。
+     * login_context の値に応じて、管理者用ログインか
+     * 一般ユーザー用ログインかを判定し、対応する UserRole を返す。
      *
-     * 想定外の値が指定された場合は、
+     * コンテキストが null または想定外の値の場合は、
      * セキュリティ上の安全策として一般ユーザー（USER）を返す。
      *
-     * ※ Fortify::authenticateUsing 内で使用される補助メソッド。
-     *
-     * @param string $context ログインフォームの種別（例: 'admin', 'user'）
+     * @param string|null $context ログインフォームの種別（例: 'admin', 'user'）
      *
      * @return UserRole 解決されたユーザー権限
      */
-    private function resolveLoginRole(string $context): UserRole
+
+    private function resolveLoginRole(?string $context): UserRole
     {
-        // 管理者用ログインフォームの場合
         if ($context === 'admin') {
-            // 管理者フラグ値を設定
-            $role = UserRole::ADMIN;
-            // 一般ユーザー用ログインフォームの場合
-        } elseif ($context === 'user') {
-            // 一般ユーザーフラグ値を設定
-            $role = UserRole::USER;
-            // その他の場合
-        } else {
-            // 一般ユーザーフラグ値を設定
-            $role = UserRole::USER;
+            return UserRole::ADMIN;
         }
-        return $role;
+
+        return UserRole::USER;
     }
 }
