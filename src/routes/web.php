@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,7 +41,7 @@ Route::get('/admin/login', function () {
 });
 
 // 一般ユーザーの場合の画面表示ルート
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
 
     // 勤怠登録画面（一般ユーザー）の表示ルート
     Route::get('/attendance', function () {
@@ -56,7 +58,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // パスにadmin/が含まれている場合のルート（すべて管理者の場合）
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'verified'])->group(function () {
 
     // 勤怠一覧画面（管理者）の表示ルート
     Route::get('/attendance/list', function () {
@@ -78,7 +80,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 });
 
 // パスにadmin/が含まれていない場合のルート（すべて管理者の場合）
-Route::middleware(['auth', 'admin'])->group(function () {
+Route::middleware(['auth', 'admin', 'verified'])->group(function () {
 
     // 修正申請承認画面（管理者）の表示ルート
     Route::get('/stamp_correction_request/approve/{attendance_correct_request}', function () {
@@ -89,7 +91,37 @@ Route::middleware(['auth', 'admin'])->group(function () {
 });
 
 // 管理者かどうかによって、勤怠詳細画面（管理者/一般ユーザー）の表示を切り替えるルート
-Route::middleware(['auth', 'role.view'])->get('/attendance/{id}', fn() => abort(500));
+Route::middleware(['auth', 'role.view', 'verified'])->get('/attendance/{id}', fn() => abort(500));
 
 // 管理者かどうかによって、申請一覧画面（管理者/一般ユーザー）の表示を切り替えるルート
-Route::middleware(['auth', 'role.view'])->get('/stamp_correction_request/list', fn() => abort(500));
+Route::middleware(['auth', 'role.view', 'verified'])->get('/stamp_correction_request/list', fn() => abort(500));
+
+// 認証必須 & まだ未認証ユーザーが来るページ（通知画面）
+Route::get('/email/verify', function () {
+    return view('auth.verify-email');
+})->middleware('auth')->name('verification.notice');
+
+// 署名付きリンクからの検証（メールの[Verify]ボタンが叩くURL）
+Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $request->fulfill();
+
+    /** @var \App\Models\User $user */
+    $user = auth()->user();
+    // 管理者でログインしている場合
+    if ($user->isAdmin()) {
+        return redirect('/admin/attendance/list')->with('verified', true); // 勤怠一覧画面（管理者）にリダイレクト
+        // 一般ユーザーでログインしている場合
+    } else {
+        // 勤怠登録画面（一般ユーザー）にリダイレクト
+        return redirect('/attendance')->with('verified', true);
+    }
+})->middleware(['auth', 'signed'])->name('verification.verify');
+
+// 検証メールの再送信
+Route::get('/email/verification-notification', function (Request $request) {
+    if ($request->user()->hasVerifiedEmail()) {
+        return back();
+    }
+    $request->user()->sendEmailVerificationNotification();
+    return back();
+})->middleware(['auth', 'throttle:6,1'])->name('verification.send');

@@ -24,7 +24,7 @@
         </div>
 
         <div class="verify-email-resend">
-            <form action="{{-- route('verification.send') --}}" method="get">
+            <form action="{{ route('verification.send') }}" method="get">
                 <button class="verify-email-resend-button">認証メールを再送する</button>
             </form>
         </div>
