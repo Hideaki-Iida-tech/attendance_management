@@ -94,25 +94,14 @@ class FortifyServiceProvider extends ServiceProvider
             // ログインフォームが一般ユーザー用か管理者用か(user or admin)を取得
             $context = $request->input('login_context');
 
-            // 管理者用ログインフォームの場合
-            if ($context === 'admin') {
-                // 管理者フラグ値を設定
-                $role = UserRole::ADMIN;
-                // 一般ユーザー用ログインフォームの場合
-            } elseif ($context === 'user') {
-                // 一般ユーザーフラグ値を設定
-                $role = UserRole::USER;
-                // その他の場合
-            } else {
-                // 一般ユーザーフラグ値を設定
-                $role = UserRole::USER;
-            }
+            // ログインフォームの種別からユーザーの権限を解決
+            $role = $this->resolveLoginRole($context);
 
             // 入力された email に一致するユーザーを取得
             $user = User::where('email', $request->input('email'))->first();
 
-            // ユーザーが存在し、かつパスワード及び管理者/一般ユーザー区分が一致する場合は User モデルを返す
-            if ($user && Hash::check($request->input('password'), $user->password) && $user->role === $role) {
+            // ログイン可能な場合は User モデルを返す
+            if ($this->canAuthenticate($user, $request, $role)) {
                 return $user;
                 // それ以外の場合はバリデーションエラーとして扱い、例外を投げる
                 // （このメッセージは password フィールドに紐づく）
@@ -127,5 +116,67 @@ class FortifyServiceProvider extends ServiceProvider
             //   authenticateUsing のコールバック仕様として null を返す形も想定されている
             return null;
         });
+    }
+
+    /**
+     * ログイン可能かどうかを判定する。
+     *
+     * 指定されたユーザーについて、
+     * - ユーザーが存在すること
+     * - 入力されたパスワードが一致すること
+     * - ユーザーの権限（管理者 / 一般ユーザー）が一致すること
+     *
+     * 上記すべてを満たす場合に true を返す。
+     *
+     * ※ Fortify::authenticateUsing 内で使用される認証判定用のヘルパーメソッド。
+     *
+     * @param User     $user    認証対象のユーザー
+     * @param Request  $request ログインリクエスト
+     * @param UserRole $role    ログインフォームに対応するユーザー権限
+     *
+     * @return bool 認証可能な場合は true、それ以外は false
+     */
+    private function canAuthenticate(User $user, Request $request, UserRole $role): bool
+    {
+        return $user &&
+            Hash::check(
+                $request->input('password'),
+                $user->password
+            ) &&
+            $user->role === $role;
+    }
+
+    /**
+     * ログインフォームの文脈からユーザー権限を解決する。
+     *
+     * ログイン時に送信される login_context の値に応じて、
+     * 管理者用ログインか一般ユーザー用ログインかを判定し、
+     * 対応する UserRole を返す。
+     *
+     * 想定外の値が指定された場合は、
+     * セキュリティ上の安全策として一般ユーザー（USER）を返す。
+     *
+     * ※ Fortify::authenticateUsing 内で使用される補助メソッド。
+     *
+     * @param string $context ログインフォームの種別（例: 'admin', 'user'）
+     *
+     * @return UserRole 解決されたユーザー権限
+     */
+    private function resolveLoginRole(string $context): UserRole
+    {
+        // 管理者用ログインフォームの場合
+        if ($context === 'admin') {
+            // 管理者フラグ値を設定
+            $role = UserRole::ADMIN;
+            // 一般ユーザー用ログインフォームの場合
+        } elseif ($context === 'user') {
+            // 一般ユーザーフラグ値を設定
+            $role = UserRole::USER;
+            // その他の場合
+        } else {
+            // 一般ユーザーフラグ値を設定
+            $role = UserRole::USER;
+        }
+        return $role;
     }
 }
