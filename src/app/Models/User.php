@@ -9,7 +9,20 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Enums\UserRole;
 
-class User extends Authenticatable
+/**
+ * User モデル
+ *
+ * このモデルは Laravel のメールアドレス確認機能を有効にするため、
+ * Illuminate\Contracts\Auth\MustVerifyEmail インターフェイスを実装しています。
+ *
+ * MustVerifyEmail を実装することで、ユーザー登録後にメールアドレスの検証が
+ * 必須となり、未確認ユーザーはメール認証が完了するまで特定の機能に
+ * アクセスできないようフレームワーク側が自動的に制御します。
+ *
+ * また、メール認証通知の送信、認証状態の判定、認証済みユーザーのみが
+ * 利用できるルート保護などが、Laravel 標準の仕組みによって提供されます。
+ */
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable;
 
