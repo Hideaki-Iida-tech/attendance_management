@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
-
+use App\Http\Controllers\AttendanceController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -44,11 +44,10 @@ Route::get('/admin/login', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // 勤怠登録画面（一般ユーザー）の表示ルート
-    Route::get('/attendance', function () {
-        $layout = 'layouts.user-menu';
-        $status = 3; // 0:勤務外 1:出勤中 2:休憩中 3:退勤済
-        return view('attendance.create', compact('layout', 'status'));
-    })->name('attendance.index');
+    Route::get('/attendance', [AttendanceController::class, 'showAttendanceForm'])->name('attendance.index');
+
+    // 出退勤のスタンプ機能
+    Route::post('/attendance', [AttendanceController::class, 'stamp']);
 
     // 勤怠一覧画面（一般ユーザー）の表示ルート
     Route::get('/attendance/list', function () {

@@ -9,18 +9,18 @@
 
 @section('content')
 <div class="attendance-register">
-    <form action="" class="attendance-register-form" method="">
+    <form action="/attendance" class="attendance-register-form" method="post">
 
         <div class="attendance-register-status">
             <span class="status-value">
 
-                @if($status === 0)
+                @if($state === \App\Enums\AttendanceState::OFF_DUTY)
                 勤務外
-                @elseif($status === 1)
+                @elseif($state === \App\Enums\AttendanceState::WORKING)
                 出勤中
-                @elseif($status === 2)
+                @elseif($state === \App\Enums\AttendanceState::ON_BREAK)
                 休憩中
-                @elseif($status === 3)
+                @elseif($state === \App\Enums\AttendanceState::FINISHED)
                 退勤済
                 @endif
 
@@ -30,37 +30,56 @@
         <div class="attendance-register-date">
             <span class="date-value">
 
+                @if($state === \App\Enums\AttendanceState::FINISHED)
+                {{ $workDate }}
+                @endif
+
             </span>
         </div>
 
         <div class="attendance-register-time">
-            <span class="time-value"></span>
+            <span class="time-value">
+
+                @if($state === \App\Enums\AttendanceState::FINISHED)
+                {{ $clockOutAt }}
+                @endif
+
+            </span>
+        </div>
+
+        <div>
+            @error('action')
+            <p class="attendance-error">{{ $message }}</p>
+            @enderror
         </div>
 
         <div class="attendance-register-button">
 
-            @if($status === 0)
-            <button class="attendance-button-clock-in" name="action" value={{$status}}>
+            @if($state === \App\Enums\AttendanceState::OFF_DUTY)
+            <button class="attendance-button-clock-in" name="action" value="clock_in">
                 出勤
             </button>
-            @elseif($status === 1)
-            <button class="attendance-button-clock-out" name="action" value={{$status}}>
+            @elseif($state === \App\Enums\AttendanceState::WORKING)
+            <button class="attendance-button-clock-out" name="action" value="clock_out">
                 退勤
             </button>
-            <button class="attendance-button-break-start" name="action" value={{$status}}>
+            <button class="attendance-button-break-start" name="action" value="break_start">
                 休憩入
             </button>
-            @elseif($status === 2)
-            <button class="attendance-button-break-end" name="action" value={{$status}}>
+            @elseif($state === \App\Enums\AttendanceState::ON_BREAK)
+            <button class="attendance-button-break-end" name="action" value="break_end">
                 休憩戻
             </button>
-            @elseif($status === 3)
+            @elseif($state === \App\Enums\AttendanceState::FINISHED)
             <p class="end-message">お疲れさまでした。</p>
             @endif
-        </div>
 
+        </div>
+        @csrf
     </form>
 </div>
+
+@if($state !== \App\Enums\AttendanceState::FINISHED)
 <script>
     function updateTime() {
         const now = new Date();
@@ -89,4 +108,6 @@
     // 1分（60,000ミリ秒）ごとに更新
     setInterval(updateTime, 1000 * 60);
 </script>
+@endif
+
 @endsection
