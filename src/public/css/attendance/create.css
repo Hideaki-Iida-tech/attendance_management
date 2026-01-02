@@ -39,6 +39,13 @@
     justify-content: center;
 }
 
+.attendance-error {
+    background: #f00;
+    color: #fff;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
 .attendance-button-clock-in {
     width: 221px;
     height: 77px;
@@ -47,6 +54,7 @@
     color: #FFF;
     border-radius: 20px;
     border: none;
+    cursor: pointer;
 }
 
 .attendance-button-clock-out {
@@ -58,6 +66,7 @@
     border-radius: 20px;
     border: none;
     margin-right: 40px;
+    cursor: pointer;
 }
 
 .attendance-button-break-start {
@@ -69,6 +78,7 @@
     border-radius: 20px;
     border: none;
     margin-left: 40px;
+    cursor: pointer;
 }
 .attendance-button-break-end {
     width: 221px;
@@ -78,6 +88,7 @@
     color: #000;
     border-radius: 20px;
     border: none;
+    cursor: pointer;
 }
 .end-message {
     font-size: 30px;
