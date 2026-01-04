@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AttendanceStampRequest;
+use App\Http\Requests\AttendanceIndexRequest;
 use App\Enums\AttendanceState;
 use App\Models\Attendance;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -321,5 +323,86 @@ class AttendanceController extends Controller
                 'exception' => $e,
             ]);
         }
+    }
+
+    /**
+     * 一般ユーザー向けの勤怠一覧画面を表示する。
+     *
+     * クエリパラメータ `month`（Y-m 形式）を受け取り、
+     * 指定された年月の勤怠データを一覧表示する。
+     * `month` が未指定の場合は、現在の年月を対象とする。
+     *
+     * 表示対象の年月に対して、
+     * - 前月 / 次月の年月文字列を生成
+     * - 月初〜月末の日付一覧を作成
+     * - ログインユーザーの勤怠情報を日付単位でマッピング
+     *
+     * @param  \App\Http\Requests\Attendance\AttendanceIndexRequest  $request
+     * @return \Illuminate\Contracts\View\View
+     *
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException
+     *         未ログイン時に不正なアクセスが行われた場合
+     */
+    public function index(AttendanceIndexRequest $request)
+    {
+
+        if (!auth()->check()) {
+            abort(400, 'Invalid action');
+        }
+
+        $layout = 'layouts.user-menu';
+
+        $user = auth()->user();
+        $userId = $user->id;
+
+        $month = $request->query('month'); // "2026-01" or null
+
+        $current = $month ?
+            Carbon::createFromFormat('Y-m', $month)->startOfMonth()
+            : now()->startOfMonth();
+
+        $yearMonth = $current->format('Y/m');
+
+        $prevMonth = $current->copy()->subMonth()->format('Y-m');
+        $nextMonth = $current->copy()->addMonth()->format('Y-m');
+
+        $baseDate = Carbon::parse($current); // 表示したい年月
+        $startOfMonth = $baseDate->copy()->startOfMonth();
+        $endOfMonth = $baseDate->copy()->endOfMOnth();
+
+        $dates = collect(
+            CarbonPeriod::create(
+                $baseDate->copy()->startOfMonth(),
+                $baseDate->copy()->endOfMonth()
+            )
+        )->map(function (Carbon $date) {
+            return [
+                'date' => $date->toDateString(),
+                'label' => $date->translatedFormat('m/d(D)'),
+            ];
+        });
+
+        $attendances = Attendance::where('user_id', $userId)
+            ->whereBetween('work_date', [$startOfMonth, $endOfMonth])
+            ->orderBy('work_date')
+            ->get();
+
+        $attendanceMap = $attendances->keyBy('work_date');
+
+        $dates = $dates->map(function ($date) use ($attendanceMap) {
+            $attendance = $attendanceMap->get($date['date']);
+
+            return array_merge($date, [
+                'attendance' => $attendance,
+            ]);
+        });
+
+        return view('attendance.index', compact(
+            'layout',
+            'yearMonth',
+            'prevMonth',
+            'nextMonth',
+            'dates'
+        ));
     }
 }
