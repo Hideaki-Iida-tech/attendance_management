@@ -206,4 +206,65 @@ class Attendance extends Model
         !is_null($break->break_start_at) &&
             is_null($break->break_end_at));
     }
+
+    public function getClockInTimeAttribute(): ?string
+    {
+        return $this->clock_in_at
+            ? $this->clock_in_at->format('H:i')
+            : null;
+    }
+
+    public function getClockOutTimeAttribute(): ?string
+    {
+        return $this->clock_out_at
+            ? $this->clock_out_at->format('H:i')
+            : null;
+    }
+
+    public function getFormatedBreakTimeAttribute(): ?string
+    {
+
+        // 休憩が存在しない場合
+        if (!$this->relationLoaded('breaks') && !$this->breaks()->exists()) {
+            return '0:00';
+        }
+
+        $totalMinutes = $this->breaks
+            ->filter(fn($break) => $break->break_start_at &&
+                $break->break_end_at)
+            ->sum(function ($break) {
+                return $break->break_end_at->diffInMinutes($break->break_start_at);
+            });
+
+        $hours = intdiv($totalMinutes, 60);
+        $minutes = $totalMinutes % 60;
+
+        return sprintf('%d:%02d', $hours, $minutes);
+    }
+
+    public function getFormatedWorkingTimeAttribute(): ?string
+    {
+        // 出勤・退勤がそろっていない日は勤務時間を出せいない
+        if (!$this->clock_in_at || !$this->clock_out_at) {
+            return null;
+        }
+
+        // 総勤務分（出勤～退勤）
+        $workMinutes = $this->clock_out_at->diffInMinutes($this->clock_in_at);
+
+        // 休憩分（開始・終了がそろっている休憩だけ合算）
+        $breaks = $this->relationLoaded('breaks') ?
+            $this->breaks : $this->breaks()->get();
+
+        $breakMinutes = $breaks->filter(fn($break) => $break->break_start_at && $break->break_end_at)
+            ->sum(fn($break) => $break->break_end_at->diffInMinutes($break->break_start_at));
+
+        // 実勤務分（マイナスにならないようガード）
+        $totalMinutes = max(0, $workMinutes - $breakMinutes);
+
+        $hours = intdiv($totalMinutes, 60);
+        $minutes = $totalMinutes % 60;
+
+        return sprintf('%d:%02d', $hours, $minutes);
+    }
 }

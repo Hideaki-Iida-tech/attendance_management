@@ -50,10 +50,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/attendance', [AttendanceController::class, 'stamp']);
 
     // 勤怠一覧画面（一般ユーザー）の表示ルート
-    Route::get('/attendance/list', function () {
-        $layout = 'layouts.user-menu';
-        return view('attendance.index', compact('layout'));
-    })->name('attendance.list');
+    Route::get('/attendance/list', [AttendanceController::class, 'index'])->name('attendance.list');
 });
 
 // パスにadmin/が含まれている場合のルート（すべて管理者の場合）
