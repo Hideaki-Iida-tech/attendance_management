@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Attendance extends Model
 {
@@ -25,6 +26,10 @@ class Attendance extends Model
     /**
      * Cast attributes to native types.
      *
+     * work_date を date（Carbon）として扱うことで、
+     * 勤務日の年月日操作（format / comparison / CarbonPeriod 等）を
+     * 安全かつ直感的に行えるようにする。
+     * 
      * clock_in_at / clock_out_at を datetime（Carbon）として扱うことで、
      * 時刻の比較・フォーマット（format / diff / translatedFormat 等）を
      * 安全かつ直感的に行えるようにする。
@@ -32,6 +37,7 @@ class Attendance extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'work_date' => 'date',
         'clock_in_at'  => 'datetime',
         'clock_out_at' => 'datetime',
     ];
@@ -47,6 +53,20 @@ class Attendance extends Model
     public function breaks()
     {
         return $this->hasMany(BreakTime::class);
+    }
+
+    /**
+     * 勤怠情報に紐づくユーザーを取得する。
+     *
+     * attendances テーブルの user_id を外部キーとして、
+     * この勤怠レコードを登録したユーザー（一般ユーザー）との
+     * 多対一（belongsTo）リレーションを定義する。
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**
@@ -207,6 +227,17 @@ class Attendance extends Model
             is_null($break->break_end_at));
     }
 
+    /**
+     * 出勤時刻を表示用の文字列（H:i）として取得する。
+     *
+     * clock_in_at が存在する場合は「08:00」のような形式で返し、
+     * 未打刻（null）の場合は null を返す。
+     *
+     * 一覧画面や勤怠詳細画面など、ビュー層での表示用途を想定した
+     * アクセサ。
+     *
+     * @return string|null
+     */
     public function getClockInTimeAttribute(): ?string
     {
         return $this->clock_in_at
@@ -214,6 +245,17 @@ class Attendance extends Model
             : null;
     }
 
+    /**
+     * 退勤時刻を表示用の文字列（H:i）として取得する。
+     *
+     * clock_out_at が存在する場合は「17:30」のような形式で返し、
+     * 未打刻（null）の場合は null を返す。
+     *
+     * 勤怠一覧画面や詳細画面など、ビュー層での表示用途を想定した
+     * アクセサ。
+     *
+     * @return string|null
+     */
     public function getClockOutTimeAttribute(): ?string
     {
         return $this->clock_out_at
@@ -221,6 +263,20 @@ class Attendance extends Model
             : null;
     }
 
+    /**
+     * 合計休憩時間を表示用の文字列（H:i）として取得する。
+     *
+     * 関連する breaks のうち、休憩開始時刻・終了時刻の両方が
+     * 設定されているレコードのみを対象として合計時間を算出する。
+     *
+     * 休憩が一件も存在しない、または未ロードかつ未登録の場合は、
+     * 表示上の都合を考慮して「0:00」を返す。
+     *
+     * 勤怠一覧画面など、ビュー層での表示用途を想定した
+     * アクセサ。
+     *
+     * @return string|null
+     */
     public function getFormatedBreakTimeAttribute(): ?string
     {
 
@@ -242,9 +298,28 @@ class Attendance extends Model
         return sprintf('%d:%02d', $hours, $minutes);
     }
 
+    /**
+     * 実勤務時間（休憩控除後）を表示用の文字列（H:i）として取得する。
+     *
+     * 出勤時刻（clock_in_at）および退勤時刻（clock_out_at）の
+     * 両方が設定されている場合のみ勤務時間を算出し、
+     * いずれかが未打刻の場合は null を返す。
+     *
+     * 勤務時間は「出勤～退勤」の総時間から、
+     * 休憩開始・終了の両方が設定されている休憩時間のみを
+     * 控除した実勤務時間とする。
+     *
+     * 控除後の勤務時間がマイナスになる場合は、
+     * 表示上の安全性を考慮して 0 分として扱う。
+     *
+     * 勤怠一覧画面など、ビュー層での表示用途を想定した
+     * アクセサ。
+     *
+     * @return string|null
+     */
     public function getFormatedWorkingTimeAttribute(): ?string
     {
-        // 出勤・退勤がそろっていない日は勤務時間を出せいない
+        // 出勤・退勤がそろっていない日は勤務時間を出せない
         if (!$this->clock_in_at || !$this->clock_out_at) {
             return null;
         }
@@ -266,5 +341,38 @@ class Attendance extends Model
         $minutes = $totalMinutes % 60;
 
         return sprintf('%d:%02d', $hours, $minutes);
+    }
+
+    /**
+     * 勤務日の年を表示用の文字列（Y年）として取得する。
+     *
+     * work_date が存在する場合は「2026年」のような形式で返し、
+     * 未設定（null）の場合は null を返す。
+     *
+     * 勤怠詳細画面など、ビュー層での表示用途を想定した
+     * アクセサ。
+     *
+     * @return string|null
+     */
+    public function getFormatedYearAttribute(): ?string
+    {
+        return $this->work_date?->format('Y年');
+    }
+
+    /**
+     * 勤務日の月日を表示用の文字列（n月j日）として取得する。
+     *
+     * work_date が存在する場合は「1月1日」「12月31日」のような
+     * ゼロ埋めなしの月日形式で返し、
+     * 未設定（null）の場合は null を返す。
+     *
+     * 勤怠詳細画面など、ビュー層での表示用途を想定した
+     * アクセサ。
+     *
+     * @return string|null
+     */
+    public function getFormatedMonthAndDayAttribute(): ?string
+    {
+        return $this->work_date?->format('n月j日');
     }
 }

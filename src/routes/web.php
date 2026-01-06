@@ -83,11 +83,11 @@ Route::middleware(['auth', 'admin', 'verified'])->group(function () {
         $layout = 'layouts.admin-menu';
         $isApproved = false;
         return view('applications/admin/approve', compact('layout', 'isApproved'));
-    });
+    })->where('attendance_correct_request', '[0-9]+');
 });
 
 // 管理者かどうかによって、勤怠詳細画面（管理者/一般ユーザー）の表示を切り替えるルート
-Route::middleware(['auth', 'role.view', 'verified'])->get('/attendance/{id}', fn() => abort(500));
+Route::middleware(['auth', 'role.view', 'verified'])->get('/attendance/{id}', [AttendanceController::class, 'show'])->where('id', '[0-9]+');
 
 // 管理者かどうかによって、申請一覧画面（管理者/一般ユーザー）の表示を切り替えるルート
 Route::middleware(['auth', 'role.view', 'verified'])->get('/stamp_correction_request/list', fn() => abort(500));

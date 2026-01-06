@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AttendanceStampRequest;
 use App\Http\Requests\AttendanceIndexRequest;
+use App\Http\Requests\AttendanceShowRequest;
+use Illuminate\Http\Request;
 use App\Enums\AttendanceState;
 use App\Models\Attendance;
 use Carbon\Carbon;
@@ -345,11 +347,6 @@ class AttendanceController extends Controller
      */
     public function index(AttendanceIndexRequest $request)
     {
-
-        if (!auth()->check()) {
-            abort(400, 'Invalid action');
-        }
-
         $layout = 'layouts.user-menu';
 
         $user = auth()->user();
@@ -387,7 +384,8 @@ class AttendanceController extends Controller
             ->orderBy('work_date')
             ->get();
 
-        $attendanceMap = $attendances->keyBy('work_date');
+        $attendanceMap = $attendances->keyBy(fn($key)
+        => $key->work_date?->toDateString());
 
         $dates = $dates->map(function ($date) use ($attendanceMap) {
             $attendance = $attendanceMap->get($date['date']);
@@ -404,5 +402,25 @@ class AttendanceController extends Controller
             'nextMonth',
             'dates'
         ));
+    }
+
+    public function show(AttendanceShowRequest $request)
+    {
+        $attendance = Attendance::with('breaks', 'user')
+            ->findOrFail($request->route('id'));
+
+        if ($request->isAdminContext) {
+            $layout = 'layouts.admin-menu';
+            return view(
+                'attendance.admin.show',
+                compact('layout', 'attendance')
+            );
+        } else {
+            $layout = 'layouts.user-menu';
+            return view(
+                'attendance.show',
+                compact('layout', 'attendance')
+            );
+        }
     }
 }

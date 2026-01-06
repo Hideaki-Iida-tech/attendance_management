@@ -9,13 +9,13 @@ class AttendanceStampRequest extends FormRequest
 {
     /**
      * リクエストの認可を行う。
-     * ※ログイン必須にしたい場合は true のままでOK（ルート側で auth を付ける想定）
+     * 未ログインの場合はリクエストを拒否
      *
      * @return bool
      */
     public function authorize()
     {
-        return true;
+        return auth()->check();
     }
 
     /**

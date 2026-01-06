@@ -37,7 +37,11 @@
                 <td>{{ $date['attendance']?->clock_out_time }}</td>
                 <td>{{ $date['attendance']?->formated_break_time }}</td>
                 <td>{{ $date['attendance']?->formated_working_time }}</td>
+                @if(empty($date['attendance']))
+                <td><span class="detail-link">詳細</span></td>
+                @else
                 <td><a href="/attendance/{{ $date['attendance']?->id }}" class="detail-link">詳細</a></td>
+                @endif
             </tr>
             @endforeach
         </table>

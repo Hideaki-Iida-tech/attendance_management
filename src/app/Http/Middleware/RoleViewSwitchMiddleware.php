@@ -29,7 +29,24 @@ class RoleViewSwitchMiddleware
         $user = $request->user();
         $path = $request->path();
 
-        if ($path === "attendance/{$request->route('id')}") {
+        if (
+            $path === "attendance/{$request->route('id')}" ||
+            $path === "stamp_correction_request/list"
+        ) {
+            if ($user->isAdmin()) {
+                $request->merge([
+                    'isAdminContext' => true,
+                ]);
+            } else {
+                $request->merge([
+                    'isAdminContext' => false,
+                ]);
+            }
+            return $next($request);
+        }
+
+        abort(500, 'Invalid');
+        /*if ($path === "attendance/{$request->route('id')}") {
 
             if ($user->isAdmin()) {
                 return response()->view(
@@ -68,6 +85,6 @@ class RoleViewSwitchMiddleware
                 ]
             );
         }
-        return $next($request);
+        return $next($request);*/
     }
 }
