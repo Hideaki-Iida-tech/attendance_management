@@ -65,7 +65,7 @@
     font-size: 20px;
     text-align: center;
 }
-.remarks {
+.reason {
     width: 270px;
     font-size: 20px;
     height: 60px;
@@ -85,4 +85,5 @@
     color: #FFF;
     width: 100px;
     height: 40px;
+    cursor: pointer;
 }

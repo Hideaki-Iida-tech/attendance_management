@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class AttendanceIndexRequest extends FormRequest
+class AttendanceShowRequest extends FormRequest
 {
     /**
      * リクエストの認可を行う。
@@ -25,15 +25,20 @@ class AttendanceIndexRequest extends FormRequest
     public function rules()
     {
         return [
-            // ?month=2026-01
-            'month' => ['nullable', 'date_format:Y-m'],
+            // ルートパラメータ id の存在・数値チェック
+            'id' => ['required', 'integer', 'exists:attendances,id'],
         ];
     }
 
-    public function messages(): array
+    /**
+     * パスパラメータidをバリデーション対象に追加するメソッド
+     * @return array
+     */
+    public function validationData()
     {
-        return [
-            'month.date_format' => '年月の形式が正しくありません。',
-        ];
+        return array_merge(
+            $this->all(),
+            ['id' => (int)$this->route('id')]
+        );
     }
 }

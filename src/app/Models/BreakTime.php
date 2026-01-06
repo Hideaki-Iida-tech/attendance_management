@@ -43,4 +43,40 @@ class BreakTime extends Model
         'break_start_at'  => 'datetime',
         'break_end_at' => 'datetime',
     ];
+
+    /**
+     * 休憩開始時刻を表示用の文字列（H:i）として取得する。
+     *
+     * break_start_at が存在する場合は「12:00」のような形式で返し、
+     * 未設定（null）の場合は null を返す。
+     *
+     * 勤怠詳細画面など、ビュー層での表示用途を想定した
+     * アクセサ。
+     *
+     * @return string|null
+     */
+    public function getBreakStartTimeAttribute(): ?string
+    {
+        return $this->break_start_at
+            ? $this->break_start_at->format('H:i')
+            : null;
+    }
+
+    /**
+     * 休憩終了時刻を表示用の文字列（H:i）として取得する。
+     *
+     * break_end_at が存在する場合は「13:00」のような形式で返し、
+     * 未設定（null）の場合は null を返す。
+     *
+     * 勤怠詳細画面など、ビュー層での表示用途を想定した
+     * アクセサ。
+     *
+     * @return string|null
+     */
+    public function getBreakEndTimeAttribute(): ?string
+    {
+        return $this->break_end_at
+            ? $this->break_end_at->format('H:i')
+            : null;
+    }
 }
