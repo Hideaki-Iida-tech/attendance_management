@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class AttendanceShowRequest extends FormRequest
 {
@@ -25,7 +26,7 @@ class AttendanceShowRequest extends FormRequest
     public function rules()
     {
         return [
-            // ルートパラメータ id の存在・数値チェック
+            // パスパラメータ id の存在・数値チェック
             'id' => ['required', 'integer', 'exists:attendances,id'],
         ];
     }

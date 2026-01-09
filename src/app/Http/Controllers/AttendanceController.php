@@ -8,6 +8,7 @@ use App\Http\Requests\AttendanceShowRequest;
 use Illuminate\Http\Request;
 use App\Enums\AttendanceState;
 use App\Models\Attendance;
+use App\Models\AttendanceChangeRequest;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Exception;
@@ -417,9 +418,24 @@ class AttendanceController extends Controller
             );
         } else {
             $layout = 'layouts.user-menu';
+            $isPending = AttendanceChangeRequest::existsPending($attendance->id);
+
+            $pendingOrApprovedRequest = null;
+
+            if ($isPending) {
+                $pendingOrApprovedRequest = AttendanceChangeRequest::getLatestPendingRequest($attendance->id);
+            }
+
+            $editable = !$isPending;
+
             return view(
                 'attendance.show',
-                compact('layout', 'attendance')
+                compact(
+                    'layout',
+                    'attendance',
+                    'pendingOrApprovedRequest',
+                    'editable'
+                )
             );
         }
     }
