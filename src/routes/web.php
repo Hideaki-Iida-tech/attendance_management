@@ -42,7 +42,7 @@ Route::get('/admin/login', function () {
 });
 
 // 一般ユーザーの場合の画面表示ルート
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'user', 'verified'])->group(function () {
 
     // 勤怠登録画面（一般ユーザー）の表示ルート
     Route::get('/attendance', [AttendanceController::class, 'showAttendanceForm'])->name('attendance.index');
