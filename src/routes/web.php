@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\AttendanceChangeRequestController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -87,7 +88,12 @@ Route::middleware(['auth', 'admin', 'verified'])->group(function () {
 });
 
 // 管理者かどうかによって、勤怠詳細画面（管理者/一般ユーザー）の表示を切り替えるルート
-Route::middleware(['auth', 'role.view', 'verified'])->get('/attendance/{id}', [AttendanceController::class, 'show'])->where('id', '[0-9]+');
+Route::middleware(['auth', 'role.view', 'verified'])->group(
+    function () {
+        Route::get('/attendance/{id}', [AttendanceController::class, 'show'])->where('id', '[0-9]+');
+        Route::post('/attendance/{id}', [AttendanceChangeRequestController::class, 'store'])->where('id', '[0-9]+');
+    }
+);
 
 // 管理者かどうかによって、申請一覧画面（管理者/一般ユーザー）の表示を切り替えるルート
 Route::middleware(['auth', 'role.view', 'verified'])->get('/stamp_correction_request/list', fn() => abort(500));

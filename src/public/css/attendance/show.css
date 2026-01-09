@@ -22,6 +22,7 @@
     border-radius: 15px;
     overflow: hidden;
 }
+
 .attendance-show-table {
     width: 100%;
     border: none;
@@ -36,6 +37,7 @@
     background: #FFF;
     height: 80px;
 }
+
 .attendance-show-table-col-title {
     padding-left: 50px;
     text-align:left;
@@ -43,34 +45,46 @@
     color: grey;
     font-size: 20px;
 }
+
 .attendance-show-table-col-second {
     width: 90px;
     font-size: 20px;
 }
+
 .spacing {
     padding-left: 15px;
 }
+
 .attendance-show-table-col-third {
     width: 50px;
     font-size: 20px;
     padding-left: 10px;
 }
+
 .attendance-show-table-col-fourth {
     width: 300px;
     padding-right: 210px;
     font-size: 20px;
 }
+
+.attendance-show-table-error {
+    background: #f00;
+    color: #FFF;
+}
+
 .time-input {
     width: 90px;
     font-size: 20px;
     text-align: center;
 }
+
 .reason {
     width: 270px;
     font-size: 20px;
     height: 60px;
     resize: none;
 }
+
 .form-button {
     margin: 0 auto;
     width: 900px;
@@ -78,6 +92,7 @@
     display: flex;
     justify-content: flex-end;
 }
+
 .modify-button {
     border-radius: 5px;
     border: none;
@@ -86,4 +101,9 @@
     width: 100px;
     height: 40px;
     cursor: pointer;
+}
+
+.pending-message {
+    color: #F00;
+    font-size: 25px;
 }
