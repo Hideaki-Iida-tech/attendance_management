@@ -65,6 +65,8 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         // 管理者の場合のガード用ミドルウェアを登録
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
+        // 一般ユーザーの場合のガード用のミドルウェアを登録
+        'user' => \App\Http\Middleware\UserMiddleware::class,
         // 管理者か一般ユーザーかで表示画面を切り替えるミドルウェアの登録
         'role.view' => \App\Http\Middleware\RoleViewSwitchMiddleware::class,
     ];
