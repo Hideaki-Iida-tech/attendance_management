@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceChangeRequestController;
+use App\Http\Controllers\UserApplicationController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -96,7 +97,7 @@ Route::middleware(['auth', 'role.view', 'verified'])->group(
 );
 
 // 管理者かどうかによって、申請一覧画面（管理者/一般ユーザー）の表示を切り替えるルート
-Route::middleware(['auth', 'role.view', 'verified'])->get('/stamp_correction_request/list', fn() => abort(500));
+Route::middleware(['auth', 'role.view', 'verified'])->get('/stamp_correction_request/list', [UserApplicationController::class, 'index']);
 
 // 認証必須 & まだ未認証ユーザーが来るページ（通知画面）
 Route::get('/email/verify', function () {

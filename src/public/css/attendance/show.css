@@ -103,6 +103,11 @@
     cursor: pointer;
 }
 
+.approved-message {
+    color: #F00;
+    font-size: 25px;
+}
+
 .pending-message {
     color: #F00;
     font-size: 25px;
