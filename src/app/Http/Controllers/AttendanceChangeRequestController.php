@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Attendance;
 use App\Models\AttendanceChangeRequest;
 use App\Http\Requests\AttendanceUpdateRequest;
@@ -16,11 +15,6 @@ class AttendanceChangeRequestController extends Controller
 {
     public function store(AttendanceUpdateRequest $request)
     {
-
-        if (!auth()->check()) {
-            abort(400, 'invalid action');
-        }
-
         $attendance = Attendance::findOrFail($request->route('id'));
 
         if ($attendance->user_id !== auth()->user()->id) {
@@ -127,8 +121,9 @@ class AttendanceChangeRequestController extends Controller
         } catch (\Exception $e) {
             // DBをロールバック
             DB::rollback();
-            Log::error($e);
-            dd($e);
+            Log::error('DB処理で例外が発生', [
+                'exception' => $e,
+            ]);
         }
     }
 

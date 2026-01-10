@@ -244,7 +244,11 @@
             @if($editable)
             <button type="submit" name="submit" class="modify-button">修正</button>
             @else
+            @if($status === App\Enums\ApplicationStatus::APPROVED)
+            <span class="approved-message">*承認済みです</span>
+            @else
             <span class="pending-message">*承認待ちのため修正できません</span>
+            @endif
             @endif
         </div>
         @csrf

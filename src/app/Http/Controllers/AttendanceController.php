@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AttendanceStampRequest;
 use App\Http\Requests\AttendanceIndexRequest;
 use App\Http\Requests\AttendanceShowRequest;
-use Illuminate\Http\Request;
 use App\Enums\AttendanceState;
 use App\Models\Attendance;
 use App\Models\AttendanceChangeRequest;
@@ -410,6 +409,8 @@ class AttendanceController extends Controller
         $attendance = Attendance::with('breaks', 'user')
             ->findOrFail($request->route('id'));
 
+        $requestId = $request->input('request_id');
+
         if ($request->isAdminContext) {
             $layout = 'layouts.admin-menu';
             return view(
@@ -418,15 +419,23 @@ class AttendanceController extends Controller
             );
         } else {
             $layout = 'layouts.user-menu';
-            $isPending = AttendanceChangeRequest::existsPending($attendance->id);
 
             $pendingOrApprovedRequest = null;
+            $isPending = false;
+            $status = null;
 
-            if ($isPending) {
-                $pendingOrApprovedRequest = AttendanceChangeRequest::getLatestPendingRequest($attendance->id);
+            if ($requestId) {
+                $pendingOrApprovedRequest = AttendanceChangeRequest::findOrFail($requestId);
+                $status = $pendingOrApprovedRequest->status;
+            } else {
+                $isPending = AttendanceChangeRequest::existsPending($attendance->id);
+                if ($isPending) {
+                    $pendingOrApprovedRequest =
+                        AttendanceChangeRequest::getLatestPendingRequest($attendance->id);
+                }
             }
 
-            $editable = !$isPending;
+            $editable = !$isPending  && !$requestId;
 
             return view(
                 'attendance.show',
@@ -434,7 +443,8 @@ class AttendanceController extends Controller
                     'layout',
                     'attendance',
                     'pendingOrApprovedRequest',
-                    'editable'
+                    'editable',
+                    'status',
                 )
             );
         }

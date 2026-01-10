@@ -45,46 +45,6 @@ class RoleViewSwitchMiddleware
             return $next($request);
         }
 
-        abort(500, 'Invalid');
-        /*if ($path === "attendance/{$request->route('id')}") {
-
-            if ($user->isAdmin()) {
-                return response()->view(
-                    'attendance.admin.show',
-                    [
-                        'layout' => 'layouts.admin-menu',
-                        'id' => $request->route('id'),
-                    ]
-                );
-            }
-
-            return response()->view(
-                'attendance.show',
-                [
-                    'layout' => 'layouts.user-menu',
-                    'id' => $request->route('id'),
-                ]
-            );
-        }
-
-        if ($path === 'stamp_correction_request/list') {
-
-            if ($user->isAdmin()) {
-                return response()->view(
-                    'applications.admin.index',
-                    [
-                        'layout' => 'layouts.admin-menu',
-                    ]
-                );
-            }
-
-            return response()->view(
-                'applications.index',
-                [
-                    'layout' => 'layouts.user-menu',
-                ]
-            );
-        }
-        return $next($request);*/
+        abort(500, 'Invalid Request');
     }
 }
