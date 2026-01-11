@@ -6,6 +6,7 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceChangeRequestController;
 use App\Http\Controllers\UserApplicationController;
+use App\Http\Controllers\AdminAttendanceController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -59,10 +60,7 @@ Route::middleware(['auth', 'user', 'verified'])->group(function () {
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'verified'])->group(function () {
 
     // 勤怠一覧画面（管理者）の表示ルート
-    Route::get('/attendance/list', function () {
-        $layout = 'layouts.admin-menu';
-        return view('attendance.admin.index', compact('layout'));
-    });
+    Route::get('/attendance/list', [AdminAttendanceController::class, 'index']);
 
     // スタッフ一覧画面（管理者）の表示ルート
     Route::get('/staff/list', function () {
