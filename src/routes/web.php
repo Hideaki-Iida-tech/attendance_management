@@ -7,6 +7,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceChangeRequestController;
 use App\Http\Controllers\UserApplicationController;
 use App\Http\Controllers\AdminAttendanceController;
+use App\Http\Controllers\AdminStaffController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -63,10 +64,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'verified']
     Route::get('/attendance/list', [AdminAttendanceController::class, 'index']);
 
     // スタッフ一覧画面（管理者）の表示ルート
-    Route::get('/staff/list', function () {
-        $layout = 'layouts.admin-menu';
-        return view('staff.admin.index', compact('layout'));
-    });
+    Route::get('/staff/list', [AdminStaffController::class, 'index']);
 
     // スタッフ別勤怠一覧画面（管理者）の表示ルート
     Route::get('/attendance/staff/{id}', function () {
