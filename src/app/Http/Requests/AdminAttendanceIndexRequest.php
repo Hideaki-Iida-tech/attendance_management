@@ -14,7 +14,9 @@ class AdminAttendanceIndexRequest extends FormRequest
      */
     public function authorize()
     {
-        return auth()->check();
+        // 管理者でログインしていることだけをここで担保
+        $user = $this->user();
+        return $user && $user->isAdmin();
     }
 
     /**

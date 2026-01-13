@@ -3,20 +3,22 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-use App\Enums\ApplicationStatus;
+use App\Models\Attendance;
+use App\Models\AttendanceChangeRequest;
 
-class AttendanceUpdateRequest extends FormRequest
+class AdminAttendanceUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      *
-     *  未ログインはリクエストを拒否
+     *  管理者でログインしていない場合はリクエストを拒否
      * @return bool
      */
     public function authorize()
     {
-        return auth()->check();
+        // 管理者でログインしていることだけをここで担保
+        $user = $this->user();
+        return $user && $user->isAdmin();
     }
 
     /**
@@ -26,21 +28,7 @@ class AttendanceUpdateRequest extends FormRequest
      */
     public function rules()
     {
-        $userId = auth()->user()->id;
-        $workDate = $this->input('work_date');
-
         return [
-            'work_date' => [
-                'required',
-                'date',
-                // 同じユーザー・同じ日付について、未処理（pending）の申請は1件まで
-                Rule::unique(
-                    'attendance_change_requests'
-                )->where(fn($query) => $query
-                    ->where('user_id', $userId)
-                    ->where('work_date', $workDate)
-                    ->where('status', ApplicationStatus::PENDING))
-            ],
 
             // パスパラメータ id の存在・数値チェック
             'id' => ['required', 'integer', 'exists:attendances,id'],
@@ -87,7 +75,6 @@ class AttendanceUpdateRequest extends FormRequest
     public function messages()
     {
         return [
-            'work_date.unique' => 'すでに修正申請が出ています。同じユーザー・同じ日付について、未処理（pending）の申請は1件までです。',
             'reason.required' => '備考を入力してください',
             'reason.max' => '備考は255文字以内で入力してください。',
             'clock_in_at.required' => '出勤時間を入力してください。',
@@ -126,6 +113,26 @@ class AttendanceUpdateRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+
+            $attendanceId = (int) $this->route('id');
+
+            // 対象勤怠が存在しないなら rules()　のexists で落ちるが念のため
+            $attendance = Attendance::query()->find($attendanceId);
+
+            if (!$attendance) {
+                return;
+            }
+
+            $hasPending = AttendanceChangeRequest::existsPending($attendanceId);
+
+            if ($hasPending) {
+                // フォーム全体のエラーにする
+                $validator->errors()->add(
+                    'pending',
+                    'この勤怠データには未承認（申請中）の修正申請があるため、直接修正できません。先に承認処理を行ってください。'
+                );
+            }
+
             // 出勤時間が退勤時間より後ろになっている場合
             // 退勤時間が手巾時間より前になっている場合
             $in = $this->input('clock_in_at');

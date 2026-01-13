@@ -12,7 +12,7 @@ class UserApplicationController extends Controller
     {
         $userId = auth()->user()->id;
 
-        $isAdminContext = $request->input('isAdminContext');
+        $isAdminContext = $request->attributes->get('is_admin_context', false);
 
         // 管理者の場合
         if ($isAdminContext) {
@@ -20,7 +20,7 @@ class UserApplicationController extends Controller
         } else {
             $layout = 'layouts.user-menu';
 
-            $tabValue = $request->input('page');
+            $tabValue = $request->query('page');
 
             if (is_null($tabValue) || $tabValue === '') {
                 $status = ApplicationStatus::PENDING->value;

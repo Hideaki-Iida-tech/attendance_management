@@ -34,13 +34,9 @@ class RoleViewSwitchMiddleware
             $path === "stamp_correction_request/list"
         ) {
             if ($user->isAdmin()) {
-                $request->merge([
-                    'isAdminContext' => true,
-                ]);
+                $request->attributes->set('is_admin_context', true);
             } else {
-                $request->merge([
-                    'isAdminContext' => false,
-                ]);
+                $request->attributes->set('is_admin_context', false);
             }
             return $next($request);
         }
