@@ -21,15 +21,15 @@
                 <th class="staff-list-col-email">メールアドレス</th>
                 <th class="staff-list-col-detail">月次勤怠</th>
             </tr>
-            @for($i = 0; $i < 10; $i++)
-                <tr class="staff-list-table-row">
-                <td class="staff-list-col-name">西 伶奈</td>
-                <td class="staff-list-col-email">reina.n@coachtech.com</td>
+            @foreach($users as $user)
+            <tr class="staff-list-table-row">
+                <td class="staff-list-col-name">{{ $user->name }}</td>
+                <td class="staff-list-col-email">{{ $user->email }}</td>
                 <td class="staff-list-col-detail">
-                    <a href="" class="detail-link">詳細</a>
+                    <a href="/admin/attendance/staff/{{ $user->id }}" class="detail-link">詳細</a>
                 </td>
-                </tr>
-                @endfor
+            </tr>
+            @endforeach
         </table>
     </div>
 </div>
