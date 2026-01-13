@@ -73,6 +73,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'verified']
         $layout = 'layouts.admin-menu';
         return view('attendance/admin/staff', compact('layout'));
     });
+
+    // 勤怠詳細画面（管理者）から呼び出されるPOST（修正機能用のルート）
+    Route::post('/attendance/{id}', [AdminAttendanceController::class, 'update'])->where('id', '[0-9]+');
 });
 
 // パスにadmin/が含まれていない場合のルート（すべて管理者の場合）

@@ -67,13 +67,18 @@
     font-size: 20px;
 }
 
+.attendance-show-table-error {
+    background: #f00;
+    color: #FFF;
+}
+
 .time-input {
     width: 90px;
     font-size: 20px;
     text-align: center;
 }
 
-.remarks {
+.reason {
     width: 270px;
     font-size: 20px;
     height: 60px;
@@ -95,4 +100,14 @@
     color: #FFF;
     width: 100px;
     height: 40px;
+    cursor: pointer;
+}
+
+.pending-message {
+    margin: 0 auto;
+    width: 900px;
+    color: #F00;
+    font-size: 25px;
+    display: flex;
+    justify-content: flex-end;
 }

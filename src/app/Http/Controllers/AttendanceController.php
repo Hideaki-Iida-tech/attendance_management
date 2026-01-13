@@ -409,13 +409,18 @@ class AttendanceController extends Controller
         $attendance = Attendance::with('breaks', 'user')
             ->findOrFail($request->route('id'));
 
-        $requestId = $request->input('request_id');
+        $requestId = $request->query('request_id');
 
-        if ($request->isAdminContext) {
+        $isAdminContext = (bool)$request->attributes->get('is_admin_context', false);
+
+        if ($isAdminContext) {
             $layout = 'layouts.admin-menu';
+
+            $isPending = AttendanceChangeRequest::existsPending($attendance->id);
+
             return view(
                 'attendance.admin.show',
-                compact('layout', 'attendance')
+                compact('layout', 'attendance', 'isPending')
             );
         } else {
             $layout = 'layouts.user-menu';

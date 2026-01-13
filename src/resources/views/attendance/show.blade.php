@@ -45,6 +45,20 @@
                     @endif
                 </tr>
 
+                @if ($errors->has('work_date'))
+                <tr class="attendance-show-table-error">
+                    <td colspan="4">
+                        <div class="show-alert-danger">
+                            <ul>
+                                @foreach ($errors->get('work_date') as $error)
+                                <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                @endif
+
                 <tr class="attendance-show-table-row">
                     <th class="attendance-show-table-col-title">
                         出勤・退勤

@@ -81,7 +81,11 @@ class AttendanceChangeRequestController extends Controller
                 $hasInput = $start && $end;
                 $hasNone = !$start && !$end;
 
-                // 片方だけ入力は無視（またはバリデーションで弾く）
+
+                // 片方だけ入力は無視
+                // ここに来る時点で「片方だけ入力」は存在しない
+                //（フォームリクエストですでに弾かれている）
+                // 念のためスキップ
                 if (!$start xor !$end) {
                     continue;
                 }
