@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Models\AttendanceChangeRequest;
 use App\Enums\ApplicationStatus;
 
 class AttendanceUpdateRequest extends FormRequest
@@ -27,19 +28,24 @@ class AttendanceUpdateRequest extends FormRequest
     public function rules()
     {
         $userId = auth()->user()->id;
-        $workDate = $this->input('work_date');
+        $requestId = AttendanceChangeRequest::where('attendance_id', $this->id)->value('id');
+
+        // 同じユーザー・同じ日付について、申請レコードは1件まで
+        $uniqueRule = Rule::unique('attendance_change_requests', 'work_date')
+            ->where(fn($query) => $query->where('user_id', $userId));
+
+        // 更新の場合は自レコードのユニーク制約を解除
+        if ($requestId !== null) {
+            $uniqueRule->ignore($requestId);
+        }
+        //$workDate = $this->input('work_date');
 
         return [
             'work_date' => [
                 'required',
                 'date',
-                // 同じユーザー・同じ日付について、未処理（pending）の申請は1件まで
-                Rule::unique(
-                    'attendance_change_requests'
-                )->where(fn($query) => $query
-                    ->where('user_id', $userId)
-                    ->where('work_date', $workDate)
-                    ->where('status', ApplicationStatus::PENDING))
+                // 同じユーザー・同じ日付について、申請レコードは1件まで
+                $uniqueRule,
             ],
 
             // パスパラメータ id の存在・数値チェック

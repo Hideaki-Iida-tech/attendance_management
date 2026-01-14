@@ -15,10 +15,23 @@ class AttendanceChangeRequestController extends Controller
 {
     public function store(AttendanceUpdateRequest $request)
     {
-        $attendance = Attendance::findOrFail($request->route('id'));
+        $attendance = Attendance::with('breaks')
+            ->findOrFail($request->route('id'));
 
         if ($attendance->user_id !== auth()->user()->id) {
             return redirect('/attendance/list');
+        }
+
+        $requestItem = AttendanceChangeRequest::where(
+            'attendance_id',
+            $attendance->id
+        )->with('attendance', 'breaks')->first();
+
+        // 既に承認待ちがあるなら更新させない
+        if ($requestItem && $requestItem->status === ApplicationStatus::PENDING) {
+            return back()->withErrors([
+                'error' => 'この勤怠は現在承認待ちの申請があるため、修正申請を更新できません。',
+            ]);
         }
 
         // トランザクション開始
@@ -37,8 +50,8 @@ class AttendanceChangeRequestController extends Controller
                 'review_comment' => null,
             ];
 
-            // 申請ヘッダーをDBに保存
-            $attendanceRequest = AttendanceChangeRequest::create($headerData);
+            $targetRequest = $requestItem ? tap($requestItem)->update($headerData) :
+                AttendanceChangeRequest::create($headerData);
 
             // 出退勤時刻関係のデータ処理
             $clockInAt = $this->toDateTime(
@@ -60,8 +73,16 @@ class AttendanceChangeRequestController extends Controller
 
             // 出退勤時刻をDBに保存
             if ($clockInAt && $clockOutAt) {
-                $attendanceRequest->attendance()->create($attendanceData);
+                $targetRequest->attendance()->updateOrCreate(
+                    [
+                        'request_id' => $targetRequest->id
+                    ],
+                    $attendanceData
+                );
             }
+
+            // 申請に紐づく休憩明細を一旦すべて削除
+            $targetRequest->breaks()->delete();
 
             // 休憩開始・終了時刻関係の処理
             $breakInputs = $request->input('breaks', []);
@@ -78,7 +99,6 @@ class AttendanceChangeRequestController extends Controller
                     $attendance->work_date
                 );
 
-                $hasInput = $start && $end;
                 $hasNone = !$start && !$end;
 
 
@@ -105,17 +125,16 @@ class AttendanceChangeRequestController extends Controller
 
                 $old = !empty($row['id']) ? $existingBreaks->get((int)$row['id']) : null;
 
+                $breakData = [
+                    'action' => $action,
+                    'target_break_id' => $row['id'] ?? null,
+                    'new_break_start_at' => $start,
+                    'new_break_end_at' => $end,
+                    'old_break_start_at' => $old?->break_start_at,
+                    'old_break_end_at' => $old?->break_end_at,
+                ];
 
-                $attendanceRequest->breaks()->create(
-                    [
-                        'action' => $action,
-                        'target_break_id' => $row['id'] ?? null,
-                        'new_break_start_at' => $start,
-                        'new_break_end_at' => $end,
-                        'old_break_start_at' => $old?->break_start_at,
-                        'old_break_end_at' => $old?->break_end_at,
-                    ]
-                );
+                $targetRequest->breaks()->create($breakData);
             }
 
             // トランザクションを確定
@@ -128,6 +147,7 @@ class AttendanceChangeRequestController extends Controller
             Log::error('DB処理で例外が発生', [
                 'exception' => $e,
             ]);
+            return back()->withErrors(['error' => '申請の保存に失敗しました。もう一度お試しください。']);
         }
     }
 

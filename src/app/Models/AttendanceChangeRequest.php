@@ -103,27 +103,6 @@ class AttendanceChangeRequest extends Model
     }
 
     /**
-     * 指定した勤怠IDに紐づく、申請中（pending）の
-     * 勤怠変更申請のうち最新の1件を取得する。
-     *
-     * created_at の降順（同時刻の場合は id の降順）で
-     * 並び替えを行い、最新のレコードを判定する。
-     *
-     * @param  int  $attendance_id  対象となる勤怠ID
-     * @return AttendanceChangeRequest|null
-     *         申請中のレコードが存在しない場合は null
-     */
-    public static function getLatestPendingRequest(int $attendance_id): ?AttendanceChangeRequest
-    {
-        return static::with('user', 'attendance', 'breaks')
-            ->where('attendance_id', $attendance_id)
-            ->where('status', ApplicationStatus::PENDING->value)
-            ->orderByDesc('created_at')
-            ->orderByDesc('id')
-            ->first();
-    }
-
-    /**
      * 勤務日の年を表示用の文字列（Y年）として取得する。
      *
      * work_date が存在する場合は「2026年」のような形式で返し、

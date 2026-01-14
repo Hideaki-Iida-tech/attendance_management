@@ -409,8 +409,6 @@ class AttendanceController extends Controller
         $attendance = Attendance::with('breaks', 'user')
             ->findOrFail($request->route('id'));
 
-        $requestId = $request->query('request_id');
-
         $isAdminContext = (bool)$request->attributes->get('is_admin_context', false);
 
         if ($isAdminContext) {
@@ -425,31 +423,23 @@ class AttendanceController extends Controller
         } else {
             $layout = 'layouts.user-menu';
 
-            $pendingOrApprovedRequest = null;
-            $isPending = false;
-            $status = null;
+            $pendingRequest = null;
 
-            if ($requestId) {
-                $pendingOrApprovedRequest = AttendanceChangeRequest::findOrFail($requestId);
-                $status = $pendingOrApprovedRequest->status;
-            } else {
-                $isPending = AttendanceChangeRequest::existsPending($attendance->id);
-                if ($isPending) {
-                    $pendingOrApprovedRequest =
-                        AttendanceChangeRequest::getLatestPendingRequest($attendance->id);
-                }
+            $isPending = AttendanceChangeRequest::existsPending($attendance->id);
+            if ($isPending) {
+                $pendingRequest =
+                    AttendanceChangeRequest::where('attendance_id', $attendance->id)->first();
             }
 
-            $editable = !$isPending  && !$requestId;
+            $editable = !$isPending;
 
             return view(
                 'attendance.show',
                 compact(
                     'layout',
                     'attendance',
-                    'pendingOrApprovedRequest',
+                    'pendingRequest',
                     'editable',
-                    'status',
                 )
             );
         }
