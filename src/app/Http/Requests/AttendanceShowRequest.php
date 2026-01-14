@@ -69,8 +69,6 @@ class AttendanceShowRequest extends FormRequest
         return [
             // パスパラメータ id の存在・数値チェック
             'id' => ['required', 'integer', 'exists:attendances,id'],
-            // 申請一覧画面から遷移してきた場合に送られてくるクエリパラメータrequest_idの存在・数値チェック
-            'request_id' => ['sometimes', 'nullable', 'integer', 'exists:attendance_change_requests,id'],
         ];
     }
 

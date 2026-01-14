@@ -42,7 +42,7 @@
                 <td>{{ $request->work_date?->format('Y/m/d') }}</td>
                 <td>{{ $request?->reason }}</td>
                 <td>{{ $request->created_at?->format('Y/m/d') }}</td>
-                <td><a href="/attendance/{{ $request->attendance_id }}/?request_id={{ $request->id }}" class="detail-link">詳細</a></td>
+                <td><a href="/attendance/{{ $request->attendance_id }}" class="detail-link">詳細</a></td>
             </tr>
             @endforeach
         </table>-

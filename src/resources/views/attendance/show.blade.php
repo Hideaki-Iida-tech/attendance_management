@@ -23,7 +23,7 @@
                     @if($editable)
                     <td class="attendance-show-table-col-second spacing">{{ optional($attendance->user)->name }}</td>
                     @else
-                    <td class="attendance-show-table-col-second spacing">{{ optional($pendingOrApprovedRequest->user)->name }}</td>
+                    <td class="attendance-show-table-col-second spacing">{{ optional($pendingRequest->user)->name }}</td>
                     @endif
                     <td class="attendance-show-table-col-third"></td>
                     <td class="attendance-show-table-col-fourth"></td>
@@ -35,13 +35,13 @@
                     <td class="attendance-show-table-col-second spacing">{{ $attendance->formated_year }}</td>
                     <input type="hidden" name="work_date" value="{{ $attendance->work_date }}" />
                     @else
-                    <td class="attendance-show-table-col-second spacing">{{ $pendingOrApprovedRequest->formated_year }}</td>
+                    <td class="attendance-show-table-col-second spacing">{{ $pendingRequest->formated_year }}</td>
                     @endif
                     <td class="attendance-show-table-col-third"></td>
                     @if($editable)
                     <td class="attendance-show-table-col-fourth spacing">{{ $attendance->formated_month_and_day }}</td>
                     @else
-                    <td class="attendance-show-table-col-fourth spacing">{{ $pendingOrApprovedRequest->formated_month_and_day }}</td>
+                    <td class="attendance-show-table-col-fourth spacing">{{ $pendingRequest->formated_month_and_day }}</td>
                     @endif
                 </tr>
 
@@ -67,7 +67,7 @@
                         @if($editable)
                         <input type="text" pattern="^([01]\d|2[0-3]):[0-5]\d$" name="clock_in_at" class="time-input" value="{{ old('clock_in_at', $attendance->clock_in_time) }}" />
                         @else
-                        <div class="time-input">{{ $pendingOrApprovedRequest->attendance->clock_in_time }}</div>
+                        <div class="time-input">{{ $pendingRequest->attendance->clock_in_time }}</div>
                         @endif
                     </td>
                     <td class="attendance-show-table-col-third">～</td>
@@ -75,7 +75,7 @@
                         @if($editable)
                         <input type="text" pattern="^([01]\d|2[0-3]):[0-5]\d$" name="clock_out_at" class="time-input" value="{{ old('clock_out_at', $attendance->clock_out_time) }}" />
                         @else
-                        <div class="time-input">{{ $pendingOrApprovedRequest->attendance->clock_out_time }}</div>
+                        <div class="time-input">{{ $pendingRequest->attendance->clock_out_time }}</div>
                         @endif
                     </td>
                 </tr>
@@ -161,7 +161,7 @@
 
                 @else
 
-                @foreach($pendingOrApprovedRequest->breaks as $break)
+                @foreach($pendingRequest->breaks as $break)
                 <tr class="attendance-show-table-row">
                     <th class="attendance-show-table-col-title">
                         @if($loop->iteration === 1)
@@ -232,7 +232,7 @@
                         @if($editable)
                         <textarea name="reason" class="reason" id="">{{ old('reason') }}</textarea>
                         @else
-                        <div class="reason">{{ $pendingOrApprovedRequest->reason }}</div>
+                        <div class="reason">{{ $pendingRequest->reason }}</div>
                         @endif
                     </td>
                 </tr>
@@ -258,11 +258,7 @@
             @if($editable)
             <button type="submit" name="submit" class="modify-button">修正</button>
             @else
-            @if($status === App\Enums\ApplicationStatus::APPROVED)
-            <span class="approved-message">*承認済みです</span>
-            @else
             <span class="pending-message">*承認待ちのため修正できません</span>
-            @endif
             @endif
         </div>
         @csrf
