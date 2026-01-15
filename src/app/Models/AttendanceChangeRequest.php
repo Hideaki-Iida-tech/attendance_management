@@ -102,6 +102,12 @@ class AttendanceChangeRequest extends Model
             ->exists();
     }
 
+    public static function isApproved(int $attendance_id): bool
+    {
+        $attendance = static::where('attendance_id', $attendance_id)->first();
+        return $attendance->status === ApplicationStatus::APPROVED;
+    }
+
     /**
      * 勤務日の年を表示用の文字列（Y年）として取得する。
      *

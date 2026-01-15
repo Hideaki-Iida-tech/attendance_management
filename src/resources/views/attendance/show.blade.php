@@ -230,7 +230,7 @@
                     <th class="attendance-show-table-col-title">備考</th>
                     <td colspan="4">
                         @if($editable)
-                        <textarea name="reason" class="reason" id="">{{ old('reason') }}</textarea>
+                        <textarea name="reason" class="reason" id="">{{ old('reason', $reason) }}</textarea>
                         @else
                         <div class="reason">{{ $pendingRequest->reason }}</div>
                         @endif
