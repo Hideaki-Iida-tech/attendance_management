@@ -174,6 +174,7 @@ class AdminAttendanceController extends Controller
             Log::error('DB処理で例外が発生', [
                 'exception' => $e,
             ]);
+            return back()->withErrors(['error' => '修正処理に失敗しました。もう一度お試しください。']);
         }
     }
 

@@ -424,11 +424,20 @@ class AttendanceController extends Controller
             $layout = 'layouts.user-menu';
 
             $pendingRequest = null;
+            $approvedRequest = null;
+            $reason = '';
 
             $isPending = AttendanceChangeRequest::existsPending($attendance->id);
             if ($isPending) {
                 $pendingRequest =
                     AttendanceChangeRequest::where('attendance_id', $attendance->id)->first();
+            }
+
+            $isApproved = AttendanceChangeRequest::isApproved($attendance->id);
+            if ($isApproved) {
+                $approvedRequest =
+                    AttendanceChangeRequest::where('attendance_id', $attendance->id)->first();
+                $reason = (string)$approvedRequest->reason;
             }
 
             $editable = !$isPending;
@@ -440,6 +449,7 @@ class AttendanceController extends Controller
                     'attendance',
                     'pendingRequest',
                     'editable',
+                    'reason',
                 )
             );
         }
