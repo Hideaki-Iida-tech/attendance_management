@@ -15,8 +15,8 @@
     </div>
 
     <div class="applications-tab">
-        <a href="" class="applications-tab-pending">承認待ち</a>
-        <a href="" class="applications-tab-approved">承認済み</a>
+        <a href="/stamp_correction_request/list/?page={{ App\Enums\ApplicationStatus::PENDING->name }}" class="applications-tab-pending">承認待ち</a>
+        <a href="/stamp_correction_request/list/?page={{ App\Enums\ApplicationStatus::APPROVED->name }}" class="applications-tab-approved">承認済み</a>
     </div>
 
     <hr class="applications-separator">
@@ -31,16 +31,24 @@
                 <th>申請日時</th>
                 <th>詳細</th>
             </tr>
-            @for($i = 0; $i < 10; $i++)
-                <tr class="applications-list-table-row">
+            @foreach($attendanceChangeRequests as $request)
+            @if($status === App\Enums\ApplicationStatus::PENDING->value)
+            <tr class="applications-list-table-row">
                 <td class="list-state-content">承認待ち</td>
-                <td>西伶奈</td>
-                <td>2023/06/01</td>
-                <td>遅延のため</td>
-                <td>2023/06/02</td>
-                <td><a href="" class="detail-link">詳細</a></td>
-                </tr>
-                @endfor
+                @elseif($status === App\Enums\ApplicationStatus::APPROVED->value)
+                <td class="list-state-content">承認待ち</td>
+                @endif
+                <td>{{ $request->user?->name }}</td>
+                <td>{{ $request->work_date?->format('Y/m/d') }}</td>
+                <td>{{ $request->reason }}</td>
+                <td>{{ $request->created_at?->format('Y/m/d') }}</td>
+                @if($status === App\Enums\ApplicationStatus::PENDING->value)
+                <td><a href="/stamp_correction_request/approve/{{ $request->id }}" class="detail-link">詳細</a></td>
+                @elseif($status === App\Enums\ApplicationStatus::APPROVED->value)
+                <td><a href="/attendance/{{ $request->attendance_id }}" class="detail-link">詳細</a></td>
+                @endif
+            </tr>
+            @endforeach
         </table>
     </div>
 </div>
