@@ -67,10 +67,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'verified']
     Route::get('/staff/list', [AdminStaffController::class, 'index']);
 
     // スタッフ別勤怠一覧画面（管理者）の表示ルート
-    Route::get('/attendance/staff/{id}', function () {
-        $layout = 'layouts.admin-menu';
-        return view('attendance/admin/staff', compact('layout'));
-    });
+    Route::get('/attendance/staff/{id}', [AdminAttendanceController::class, 'staffMonthlyIndex']);
+
+    // スタッフ別勤怠一覧のCSVデータ出力ルート
+    Route::get('/attendance/staff/{id}/export', [AdminAttendanceController::class, 'exportStaffMonthlyCsv']);
 
     // 勤怠詳細画面（管理者）から呼び出されるPOST（修正機能用のルート）
     Route::post('/attendance/{id}', [AdminAttendanceController::class, 'update'])->where('id', '[0-9]+');
