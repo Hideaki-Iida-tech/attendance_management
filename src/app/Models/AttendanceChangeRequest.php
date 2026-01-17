@@ -89,23 +89,43 @@ class AttendanceChangeRequest extends Model
     }
 
     /**
-     * 指定した勤怠IDに対して、申請中（pending）の
-     * 勤怠変更申請が存在するかを判定する。
+     * 指定した勤怠IDに紐づくレコードが申請中（PENDING）状態で存在するかを判定する。
      *
-     * @param  int  $attendance_id  対象となる勤怠ID
-     * @return bool 申請中のレコードが存在する場合は true
+     * 対象レコードが存在しない場合や、
+     * ステータスが申請中（PENDING）以外の場合は false を返す。
+     *
+     * モデルを生成せず、存在チェック（exists）のみを行うため、
+     * 管理者・一般ユーザーの一覧画面などで高速に利用できる。
+     *
+     * @param  int  $attendance_id  判定対象の勤怠ID
+     * @return bool 申請中のレコードが存在する場合 true、それ以外の場合 false
      */
     public static function existsPending(int $attendance_id): bool
     {
-        return static::where('attendance_id', $attendance_id)
-            ->where('status', ApplicationStatus::PENDING->value)
+        return static::query()
+            ->where('attendance_id', $attendance_id)
+            ->where('status', ApplicationStatus::PENDING)
             ->exists();
     }
 
+    /**
+     * 指定した勤怠IDのレコードが「承認済み」状態で存在するかを判定する。
+     *
+     * 対象の勤怠レコードが存在しない場合や、
+     * ステータスが承認済み（APPROVED）以外の場合は false を返す。
+     *
+     * モデルの生成を行わず、存在チェック（exists）によって
+     * 高速に真偽値を返す。
+     *
+     * @param  int  $attendance_id  判定対象の勤怠ID
+     * @return bool 承認済みの場合 true、それ以外の場合 false
+     */
     public static function isApproved(int $attendance_id): bool
     {
-        $attendance = static::where('attendance_id', $attendance_id)->first();
-        return $attendance->status === ApplicationStatus::APPROVED;
+        return static::query()
+            ->where('attendance_id', $attendance_id)
+            ->where('status', ApplicationStatus::APPROVED)
+            ->exists();
     }
 
     /**
