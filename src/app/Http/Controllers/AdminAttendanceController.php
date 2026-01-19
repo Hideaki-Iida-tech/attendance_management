@@ -153,7 +153,8 @@ class AdminAttendanceController extends Controller
         });
 
         // エクスポート先のファイル名を設定
-        $filename = 'attendance_staff_' . $user->id . '_' . $currentMonth . '_' . now()->format('Ymd_His') . '.csv';
+        $filename = 'attendance_staff_' . $user->id . '_'
+            . $currentMonth . '_' . now()->format('Ymd_His') . '.csv';
 
         // エクスポートするデータのヘッダを設定
         $headers = [

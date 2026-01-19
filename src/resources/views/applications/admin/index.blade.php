@@ -32,11 +32,11 @@
                 <th>詳細</th>
             </tr>
             @foreach($attendanceChangeRequests as $request)
-            @if($status === App\Enums\ApplicationStatus::PENDING->value)
             <tr class="applications-list-table-row">
+                @if($status === App\Enums\ApplicationStatus::PENDING->value)
                 <td class="list-state-content">承認待ち</td>
                 @elseif($status === App\Enums\ApplicationStatus::APPROVED->value)
-                <td class="list-state-content">承認待ち</td>
+                <td class="list-state-content">承認済み</td>
                 @endif
                 <td>{{ $request->user?->name }}</td>
                 <td>{{ $request->work_date?->format('Y/m/d') }}</td>

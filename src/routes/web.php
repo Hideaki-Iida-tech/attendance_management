@@ -8,6 +8,8 @@ use App\Http\Controllers\AttendanceChangeRequestController;
 use App\Http\Controllers\UserApplicationController;
 use App\Http\Controllers\AdminAttendanceController;
 use App\Http\Controllers\AdminStaffController;
+use App\Http\Controllers\AdminApplicationController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -80,11 +82,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin', 'verified']
 Route::middleware(['auth', 'admin', 'verified'])->group(function () {
 
     // 修正申請承認画面（管理者）の表示ルート
-    Route::get('/stamp_correction_request/approve/{attendance_correct_request}', function () {
-        $layout = 'layouts.admin-menu';
-        $isApproved = false;
-        return view('applications/admin/approve', compact('layout', 'isApproved'));
-    })->where('attendance_correct_request', '[0-9]+');
+    Route::get('/stamp_correction_request/approve/{attendance_correct_request}', [AdminApplicationController::class, 'show'])->where('attendance_correct_request', '[0-9]+');
+
+    // 修正申請承認画面（管理者）での承認処理ルート
+    Route::post('/stamp_correction_request/approve/{attendance_correct_request}', [AdminApplicationController::class, 'update'])->where('attendance_correct_request', '[0-9]+');
 });
 
 // 管理者かどうかによって、勤怠詳細画面（管理者/一般ユーザー）の表示を切り替えるルート

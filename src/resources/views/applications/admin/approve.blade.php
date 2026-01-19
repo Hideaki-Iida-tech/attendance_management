@@ -14,22 +14,22 @@
         <h1 class="approve-title-inner">勤怠詳細</h1>
     </div>
 
-    <form action="" class="approve-form">
+    <form action="/stamp_correction_request/approve/{{ $attendanceChangeRequest->id }}" class="approve-form" method="post">
         <div class="approve-content">
 
             <table class="approve-table">
                 <tr class="approve-table-row">
                     <th class="approve-table-col-title">名前</th>
-                    <td class="approve-table-col-second spacing">西 伶奈</td>
+                    <td class="approve-table-col-second spacing">{{ $attendanceChangeRequest->user->name }}</td>
                     <td class="approve-table-col-third"></td>
                     <td class="approve-table-col-fourth"></td>
                 </tr>
 
                 <tr class="approve-table-row">
                     <th class="approve-table-col-title">日付</th>
-                    <td class="approve-table-col-second spacing">2023年</td>
+                    <td class="approve-table-col-second spacing">{{ $attendanceChangeRequest->formated_year }}</td>
                     <td class="approve-table-col-third"></td>
-                    <td class="approve-table-col-fourth spacing">6月1日</td>
+                    <td class="approve-table-col-fourth spacing">{{ $attendanceChangeRequest->formated_month_and_day }}</td>
                 </tr>
 
                 <tr class="approve-table-row">
@@ -37,54 +37,45 @@
                         出勤・退勤
                     </th>
                     <td class="approve-table-col-second">
-                        <div class="time-value">clock_in</div>
+                        <div class="time-value">
+                            {{ $attendanceChangeRequest->attendance?->clock_in_time }}
+                        </div>
                     </td>
                     <td class="approve-table-col-third">～</td>
                     <td class="approve-table-col-fourth">
                         <div class="time-value">
-                            clock_out
+                            {{ $attendanceChangeRequest->attendance?->clock_out_time }}
                         </div>
                     </td>
                 </tr>
 
+                @foreach($attendanceChangeRequest->breaks as $break)
                 <tr class="approve-table-row">
                     <th class="approve-table-col-title">
+                        @if($loop->iteration === 1)
                         休憩
+                        @else
+                        休憩{{ $loop->iteration }}
+                        @endif
                     </th>
                     <td class="approve-table-col-second">
                         <div class="time-value">
-                            break_start
+                            {{ $break?->break_start_time }}
                         </div>
                     </td>
                     <td class="approve-table-col-third">～</td>
                     <td class="approve-table-col-fourth">
                         <div class="time-value">
-                            break_end
+                            {{ $break?->break_end_time }}
                         </div>
                     </td>
                 </tr>
-
-                <tr class="approve-table-row">
-                    <th class="approve-table-col-title">
-                        休憩2
-                    </th>
-                    <td class="approve-table-col-second">
-                        <div class="time-value">
-                            break_start
-                        </div>
-                    </td>
-                    <td class="approve-table-col-third">～</td>
-                    <td class="approve-table-col-fourth">
-                        <div class="time-value">
-                            break_end
-                        </div>
-                    </td>
-                </tr>
+                @endforeach
 
                 <tr class="approve-table-row">
                     <th class="approve-table-col-title">備考</th>
-                    <td colspan="3">
-                        <div class="remarks">remarks</div>
+                    <td colspan="4">
+                        <div class="remarks">{{ $attendanceChangeRequest->reason}}</div>
                     </td>
                 </tr>
             </table>
@@ -96,6 +87,7 @@
             <button type="submit" name="submit" class="approve-button">承認</button>
             @endif
         </div>
+        @csrf
     </form>
 </div>
 @endsection

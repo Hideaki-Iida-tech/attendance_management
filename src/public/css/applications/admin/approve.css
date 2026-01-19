@@ -95,6 +95,7 @@
     color: #FFF;
     width: 100px;
     height: 40px;
+    cursor: pointer;
 }
 
 .already-approved-button {
