@@ -42,11 +42,7 @@
                 <td>{{ $request->work_date?->format('Y/m/d') }}</td>
                 <td>{{ $request->reason }}</td>
                 <td>{{ $request->created_at?->format('Y/m/d') }}</td>
-                @if($status === App\Enums\ApplicationStatus::PENDING->value)
                 <td><a href="/stamp_correction_request/approve/{{ $request->id }}" class="detail-link">詳細</a></td>
-                @elseif($status === App\Enums\ApplicationStatus::APPROVED->value)
-                <td><a href="/attendance/{{ $request->attendance_id }}" class="detail-link">詳細</a></td>
-                @endif
             </tr>
             @endforeach
         </table>
