@@ -20,9 +20,7 @@
             <table class="attendance-show-table">
                 <tr class="attendance-show-table-row">
                     <th class="attendance-show-table-col-title">名前</th>
-                    <td class="attendance-show-table-col-second spacing">{{ optional($attendance->user)->name }}</td>
-                    <td class="attendance-show-table-col-third"></td>
-                    <td class="attendance-show-table-col-fourth"></td>
+                    <td colspan="3" class="attendance-show-table-col-second spacing">{{ optional($attendance->user)->name }}</td>
                 </tr>
 
                 <tr class="attendance-show-table-row">

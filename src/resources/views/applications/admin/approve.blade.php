@@ -20,9 +20,7 @@
             <table class="approve-table">
                 <tr class="approve-table-row">
                     <th class="approve-table-col-title">名前</th>
-                    <td class="approve-table-col-second spacing">{{ $attendanceChangeRequest->user->name }}</td>
-                    <td class="approve-table-col-third"></td>
-                    <td class="approve-table-col-fourth"></td>
+                    <td colspan="3" class="approve-table-col-second spacing">{{ $attendanceChangeRequest->user->name }}</td>
                 </tr>
 
                 <tr class="approve-table-row">

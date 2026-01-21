@@ -81,8 +81,20 @@
 .reason {
     width: 270px;
     font-size: 20px;
-    height: 60px;
-    resize: none;
+    line-height: 1.4;
+
+    /* 固定高さをやめる */
+    white-space: pre-wrap;
+    /* 改行をそのまま表示 */
+    word-break: break-word;
+}
+
+textarea.reason {
+    resize:none;
+}
+
+div.reason {
+    height: auto;
 }
 
 .form-button {

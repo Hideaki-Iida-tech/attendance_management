@@ -21,12 +21,10 @@
                 <tr class="attendance-show-table-row">
                     <th class="attendance-show-table-col-title">名前</th>
                     @if($editable)
-                    <td class="attendance-show-table-col-second spacing">{{ optional($attendance->user)->name }}</td>
+                    <td colspan="3" class="attendance-show-table-col-second spacing">{{ optional($attendance->user)->name }}</td>
                     @else
-                    <td class="attendance-show-table-col-second spacing">{{ optional($pendingRequest->user)->name }}</td>
+                    <td colspan="3" class="attendance-show-table-col-second spacing">{{ optional($pendingRequest->user)->name }}</td>
                     @endif
-                    <td class="attendance-show-table-col-third"></td>
-                    <td class="attendance-show-table-col-fourth"></td>
                 </tr>
 
                 <tr class="attendance-show-table-row">
