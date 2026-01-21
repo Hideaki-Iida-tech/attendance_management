@@ -40,6 +40,7 @@ class AttendanceController extends Controller
         $clockOutAt = null;
 
         if ($state === AttendanceState::FINISHED) {
+            $layout = 'layouts.attendance-menu-after-work';
             $attendance = Attendance::where('user_id', auth()->user()->id)
                 ->whereDate('work_date', today())
                 ->first();
