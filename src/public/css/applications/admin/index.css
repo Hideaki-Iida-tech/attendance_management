@@ -54,6 +54,11 @@
     overflow: hidden;
 }
 
+a.active {
+    font-weight: bold;
+    color: #000;
+}
+
 .applications-list-table {
     width: 100%;
     border: none;

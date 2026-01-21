@@ -15,8 +15,8 @@
     </div>
 
     <div class="applications-tab">
-        <a href="/stamp_correction_request/list/?page={{ App\Enums\ApplicationStatus::PENDING->name }}" class="applications-tab-pending">承認待ち</a>
-        <a href="/stamp_correction_request/list/?page={{ App\Enums\ApplicationStatus::APPROVED->name }}" class="applications-tab-approved">承認済み</a>
+        <a href="/stamp_correction_request/list/?page={{ App\Enums\ApplicationStatus::PENDING->name }}" class="applications-tab-pending {{ $status === App\Enums\ApplicationStatus::PENDING->value ? 'active' : '' }}">承認待ち</a>
+        <a href="/stamp_correction_request/list/?page={{ App\Enums\ApplicationStatus::APPROVED->name }}" class="applications-tab-approved {{ $status === App\Enums\ApplicationStatus::APPROVED->value ? 'active' : '' }}">承認済み</a>
     </div>
 
     <hr class="applications-separator">
