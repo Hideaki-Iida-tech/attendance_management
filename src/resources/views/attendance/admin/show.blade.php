@@ -163,7 +163,7 @@
 
                 <tr class="attendance-show-table-row">
                     <th class="attendance-show-table-col-title">備考</th>
-                    <td colspan="4"><textarea name="reason" class="reason" id="">{{ old('reason') }}</textarea>
+                    <td colspan="4"><textarea name="reason" class="reason" id="">{{ old('reason', $reason) }}</textarea>
                     </td>
                 </tr>
 

@@ -7,6 +7,9 @@ use App\Http\Requests\AdminAttendanceUpdateRequest;
 use App\Http\Requests\AdminStaffMonthlyAttendanceIndexRequest;
 use App\Models\Attendance;
 use App\Models\User;
+use App\Models\AttendanceChangeRequest;
+use App\Enums\ApplicationStatus;
+use App\Enums\ActionType;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\DB;
@@ -232,6 +235,18 @@ class AdminAttendanceController extends Controller
             return;
         };
 
+        $requestItem = AttendanceChangeRequest::where(
+            'attendance_id',
+            $attendance->id
+        )->with('attendance', 'breaks')->first();
+
+
+        // 既に承認待ちがあるなら更新させない
+        if ($requestItem && $requestItem->status === ApplicationStatus::PENDING) {
+            return back()->withErrors([
+                'error' => 'この勤怠は現在承認待ちの申請があるため、修正申請を更新できません。',
+            ]);
+        }
         // トランザクション開始
         DB::beginTransaction();
 
@@ -265,6 +280,42 @@ class AdminAttendanceController extends Controller
             if ($clockInAt && $clockOutAt) {
                 $attendance->update($attendanceData);
             }
+
+            // 申請ヘッダーに保存するデータをセット
+            $headerData = [
+                'user_id' => $attendance->user_id,
+                'attendance_id' => $attendance->id,
+                'work_date' => $attendance->work_date,
+                'status' => ApplicationStatus::APPROVED,
+                'reason' => $request->input('reason'),
+                'reviewed_by' => auth()->user()->id,
+                'reviewed_at' => now(),
+                'review_comment' => null,
+            ];
+
+            $targetRequest = $requestItem ? tap($requestItem)->update($headerData) :
+                AttendanceChangeRequest::create($headerData);
+
+            // 出退勤時刻のデータをセット
+            $attendanceData = [
+                'new_clock_in_at' => $clockInAt,
+                'new_clock_out_at' => $clockOutAt,
+                'old_clock_in_at' => $attendance->clock_in_at,
+                'old_clock_out_at' => $attendance->clock_out_at,
+            ];
+
+            // 出退勤時刻をDBに保存
+            if ($clockInAt && $clockOutAt) {
+                $targetRequest->attendance()->updateOrCreate(
+                    [
+                        'request_id' => $targetRequest->id
+                    ],
+                    $attendanceData
+                );
+            }
+
+            // 申請に紐づく休憩明細を一旦すべて削除
+            $targetRequest->breaks()->delete();
 
             // 休憩開始・終了時刻関係の処理
             $breakInputs = $request->input('breaks', []);
@@ -310,6 +361,7 @@ class AdminAttendanceController extends Controller
 
                         // レコードを削除
                         $break->delete();
+                        $action = ActionType::DELETE;
                     }
 
                     continue; // 新規枠で未入力は何もしない or 削除後は以下のコードをスキップ
@@ -324,6 +376,7 @@ class AdminAttendanceController extends Controller
                             'break_end_at' => $end,
                         ]
                     );
+                    $action = ActionType::ADD;
                 } else {
 
                     $break = $existingBreaks->get((int) $breakId);
@@ -340,7 +393,21 @@ class AdminAttendanceController extends Controller
                             'break_end_at' => $end,
                         ]
                     );
+                    $action = ActionType::UPDATE;
                 }
+
+                $old = !empty($row['id']) ? $existingBreaks->get((int)$row['id']) : null;
+
+                $breakData = [
+                    'action' => $action,
+                    'target_break_id' => $row['id'] ?? null,
+                    'new_break_start_at' => $start,
+                    'new_break_end_at' => $end,
+                    'old_break_start_at' => $old?->break_start_at,
+                    'old_break_end_at' => $old?->break_end_at,
+                ];
+
+                $targetRequest->breaks()->create($breakData);
             }
 
             // トランザクションを確定

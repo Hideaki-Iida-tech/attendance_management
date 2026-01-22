@@ -414,12 +414,20 @@ class AttendanceController extends Controller
 
         if ($isAdminContext) {
             $layout = 'layouts.admin-menu';
+            $reason = '';
 
             $isPending = AttendanceChangeRequest::existsPending($attendance->id);
 
+            $isApproved = AttendanceChangeRequest::isApproved($attendance->id);
+            if ($isApproved) {
+                $approvedRequest =
+                    AttendanceChangeRequest::where('attendance_id', $attendance->id)->first();
+                $reason = (string)$approvedRequest->reason;
+            }
+
             return view(
                 'attendance.admin.show',
-                compact('layout', 'attendance', 'isPending')
+                compact('layout', 'attendance', 'isPending', 'reason')
             );
         } else {
             $layout = 'layouts.user-menu';
