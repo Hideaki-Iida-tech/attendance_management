@@ -25,11 +25,11 @@
         <table class="applications-list-table">
             <tr class="applications-list-table-title">
                 <th class="list-state">状態</th>
-                <th>名前</th>
-                <th>対象日時</th>
-                <th>申請理由</th>
-                <th>申請日時</th>
-                <th>詳細</th>
+                <th class="list-name">名前</th>
+                <th class="list-target-date">対象日時</th>
+                <th class="list-reason">申請理由</th>
+                <th class="list-request-date">申請日時</th>
+                <th class="list-detail">詳細</th>
             </tr>
             @foreach($attendanceChangeRequests as $request)
             <tr class="applications-list-table-row">
@@ -40,12 +40,14 @@
                 @endif
                 <td>{{ $request->user?->name}}</td>
                 <td>{{ $request->work_date?->format('Y/m/d') }}</td>
-                <td>{{ $request?->reason }}</td>
+                <td class="list-reason">
+                    <div class="reason-scroll">{{ $request?->reason }}</div>
+                </td>
                 <td>{{ $request->created_at?->format('Y/m/d') }}</td>
                 <td><a href="/attendance/{{ $request->attendance_id }}" class="detail-link">詳細</a></td>
             </tr>
             @endforeach
-        </table>-
+        </table>
     </div>
 </div>
 @endsection
