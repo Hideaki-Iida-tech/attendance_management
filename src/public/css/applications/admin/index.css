@@ -90,8 +90,39 @@ a.active {
     padding-left: 30px;
 }
 
+.list-name {
+    width: 140px;
+}
+
+.list-target-date {
+    width: 140px;
+}
+
+.list-reason {
+    width: 155px;
+    
+}
+
+.list-request-date {
+    width: 140px;
+}
+
+.list-detail {
+    width: 100px;
+}
+
 .detail-link {
     color: #000;
     text-decoration: none;
     font-weight: bold;
+}
+
+.reason-scroll {
+    max-width: 155px;
+    padding-right: 15px;
+    white-space: nowrap;
+    /* 折り返さない */
+    overflow-x: auto;
+    /* 横スクロールON */
+    overflow-y: hidden;
 }
