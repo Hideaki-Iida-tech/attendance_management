@@ -16,7 +16,7 @@ class AttendancesSeeder extends Seeder
      */
     public function run()
     {
-        $userId = User::where('name', 'テストユーザー1')->value('id');
+        $userId = User::where('email', 'test1@example.com')->value('id');
 
         Attendance::updateOrCreate(
             [
