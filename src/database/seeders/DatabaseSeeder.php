@@ -18,5 +18,11 @@ class DatabaseSeeder extends Seeder
         $this->call(AdminUserSeeder::class);
         // 一般ユーザーを登録するシーダーGeneralUserSeederを登録
         $this->call(GeneralUserSeeder::class);
+
+        // テストユーザー1の2026-01月分の勤怠データ作成seederを登録
+        $this->call(AttendancesSeeder::class);
+
+        // 2026-01月分の休憩データ作成seederを登録
+        $this->call(BreaksSeeder::class);
     }
 }
