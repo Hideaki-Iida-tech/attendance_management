@@ -7,6 +7,7 @@ use App\Http\Requests\AdminAttendanceUpdateRequest;
 use App\Http\Requests\AdminStaffMonthlyAttendanceIndexRequest;
 use App\Models\Attendance;
 use App\Models\User;
+use Illuminate\Http\Request;
 use App\Models\AttendanceChangeRequest;
 use App\Enums\ApplicationStatus;
 use App\Enums\ActionType;
@@ -16,9 +17,25 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Cookie;
+use Illuminate\Support\Collection;
 
 class AdminAttendanceController extends Controller
 {
+    /**
+     * 管理者用 勤怠一覧画面を表示する。
+     *
+     * クエリパラメータ `day`（Y-m-d形式）で指定された日付、
+     * または未指定の場合は当日を基準日として、
+     * 該当日の勤怠情報をユーザー・休憩情報とともに取得する。
+     *
+     * - ユーザー情報を eager load することで N+1 問題を回避
+     * - 休憩情報は break_start_at 昇順で取得
+     * - 一覧は user_id 昇順で表示
+     * - 前日・翌日遷移用の日付も併せて生成
+     *
+     * @param  \App\Http\Requests\AdminAttendanceIndexRequest  $request
+     * @return \Illuminate\View\View
+     */
     public function index(AdminAttendanceIndexRequest $request)
     {
         $layout = 'layouts.admin-menu';
@@ -35,8 +52,15 @@ class AdminAttendanceController extends Controller
         $preDay = $current->copy()->subDay()->format('Y-m-d');
         $nextDay = $current->copy()->addDay()->format('Y-m-d');
 
-        $attendances = Attendance::with('user', 'breaks')
-            ->whereDate('work_date', $current)->get();
+        $attendances = Attendance::with(
+            [
+                'user',
+                'breaks' => fn($query) => $query->orderBy('break_start_at')
+            ]
+        )
+            ->whereDate('work_date', $current)
+            ->orderBy('user_id')
+            ->get();
 
         return view('attendance.admin.index', compact(
             'layout',
@@ -48,6 +72,22 @@ class AdminAttendanceController extends Controller
         ));
     }
 
+    /**
+     * 管理者用：特定スタッフの月次勤怠一覧を表示する。
+     *
+     * ルートパラメータで指定されたスタッフ（user）について、
+     * クエリパラメータ `month`（Y-m形式）で指定された月、
+     * または未指定の場合は当月を対象として勤怠情報を取得する。
+     *
+     * 対象月の全日付を生成し、各日付に対して該当する勤怠データを
+     * 紐付けることで、勤怠が存在しない日も含めた月次一覧を構築する。
+     *
+     * - 勤怠データは work_date 昇順で取得
+     * - 前月・翌月遷移用の月情報も併せて生成
+     *
+     * @param  \App\Http\Requests\AdminStaffMonthlyAttendanceIndexRequest  $request
+     * @return \Illuminate\View\View
+     */
     public function staffMonthlyIndex(AdminStaffMonthlyAttendanceIndexRequest $request)
     {
         $layout = 'layouts.admin-menu';
@@ -55,11 +95,11 @@ class AdminAttendanceController extends Controller
         $user = User::findOrFail($request->route('id'));
         $userId = $user->id;
 
-        $month = $request->query('month'); // "2026-01" or null
+        $target = $this->resolveTargetMonth($request);
 
-        $current = $month ?
-            Carbon::createFromFormat('Y-m', $month)->startOfMonth()
-            : now()->startOfMonth();
+        $startOfMonth = $target['start'];
+        $endOfMonth = $target['end'];
+        $current = $target['current'];
 
         $yearMonth = $current->format('Y/m');
         $currentMonth = $current->format('Y-m');
@@ -67,37 +107,11 @@ class AdminAttendanceController extends Controller
         $prevMonth = $current->copy()->subMonth()->format('Y-m');
         $nextMonth = $current->copy()->addMonth()->format('Y-m');
 
-        $baseDate = Carbon::parse($current); // 表示したい年月
-        $startOfMonth = $baseDate->copy()->startOfMonth();
-        $endOfMonth = $baseDate->copy()->endOfMonth();
+        $dates = $this->buildMonthlyDates($startOfMonth, $endOfMonth);
 
-        $dates = collect(
-            CarbonPeriod::create(
-                $baseDate->copy()->startOfMonth(),
-                $baseDate->copy()->endOfMonth()
-            )
-        )->map(function (Carbon $date) {
-            return [
-                'date' => $date->toDateString(),
-                'label' => $date->translatedFormat('m/d(D)'),
-            ];
-        });
+        $attendanceMap = $this->getMonthlyAttendanceMap($userId, $startOfMonth, $endOfMonth);
 
-        $attendances = Attendance::where('user_id', $userId)
-            ->whereBetween('work_date', [$startOfMonth, $endOfMonth])
-            ->orderBy('work_date')
-            ->get();
-
-        $attendanceMap = $attendances->keyBy(fn($key)
-        => $key->work_date?->toDateString());
-
-        $dates = $dates->map(function ($date) use ($attendanceMap) {
-            $attendance = $attendanceMap->get($date['date']);
-
-            return array_merge($date, [
-                'attendance' => $attendance,
-            ]);
-        });
+        $dates = $this->attachAttendancesToDates($dates, $attendanceMap);
 
         return view('attendance/admin/staff', compact(
             'layout',
@@ -110,50 +124,39 @@ class AdminAttendanceController extends Controller
         ));
     }
 
+    /**
+     * 管理者用：特定スタッフの月次勤怠データを CSV 形式でエクスポートする。
+     *
+     * ルートパラメータで指定されたスタッフについて、
+     * クエリパラメータ `month`（Y-m形式）で指定された月、
+     * または未指定の場合は当月を対象として勤怠データを取得する。
+     *
+     * 対象月の全日付を生成し、各日付に対応する勤怠情報を紐付けた上で、
+     * CSV 形式のストリームレスポンスとして出力する。
+     *
+     * - 勤怠が存在しない日も含めて出力
+     * - CSV は UTF-8（BOM付き）で生成し、Excelでの文字化けを防止
+     * - ダウンロード完了検知用に Cookie（csv_downloaded）を付与
+     *
+     * @param  \App\Http\Requests\AdminStaffMonthlyAttendanceIndexRequest  $request
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     */
     public function exportStaffMonthlyCsv(AdminStaffMonthlyAttendanceIndexRequest $request)
     {
         $user = User::findOrFail($request->route('id'));
         $userId = $user->id;
 
-        $month = $request->query('month'); // "2026-01" or null
+        $target = $this->resolveTargetMonth($request);
 
-        $current = $month ?
-            Carbon::createFromFormat('Y-m', $month)->startOfMonth()
-            : now()->startOfMonth();
+        $currentMonth = $target['month'];
+        $startOfMonth = $target['start'];
+        $endOfMonth = $target['end'];
 
-        $currentMonth = $current->format('Y-m');
+        $dates = $this->buildMonthlyDates($startOfMonth, $endOfMonth);
 
-        $baseDate = Carbon::parse($current); // 表示したい年月
-        $startOfMonth = $baseDate->copy()->startOfMonth();
-        $endOfMonth = $baseDate->copy()->endOfMonth();
+        $attendanceMap = $this->getMonthlyAttendanceMap($userId, $startOfMonth, $endOfMonth);
 
-        $dates = collect(
-            CarbonPeriod::create(
-                $baseDate->copy()->startOfMonth(),
-                $baseDate->copy()->endOfMonth()
-            )
-        )->map(function (Carbon $date) {
-            return [
-                'date' => $date->toDateString(),
-                'label' => $date->translatedFormat('m/d(D)'),
-            ];
-        });
-
-        $attendances = Attendance::where('user_id', $userId)
-            ->whereBetween('work_date', [$startOfMonth, $endOfMonth])
-            ->orderBy('work_date')
-            ->get();
-
-        $attendanceMap = $attendances->keyBy(fn($key)
-        => $key->work_date?->toDateString());
-
-        $dates = $dates->map(function ($date) use ($attendanceMap) {
-            $attendance = $attendanceMap->get($date['date']);
-
-            return array_merge($date, [
-                'attendance' => $attendance,
-            ]);
-        });
+        $dates = $this->attachAttendancesToDates($dates, $attendanceMap);
 
         // エクスポート先のファイル名を設定
         $filename = 'attendance_staff_' . $user->id . '_'
@@ -428,6 +431,19 @@ class AdminAttendanceController extends Controller
         }
     }
 
+    /**
+     * 勤務日と時刻文字列から Carbon の日時オブジェクトを生成する。
+     *
+     * 勤務日（workDate）に対して、"H:i" 形式の時刻文字列を結合し、
+     * "Y-m-d H:i" 形式の日時として Carbon インスタンスを生成する。
+     *
+     * 時刻が未指定（null または空文字）の場合は null を返す。
+     * 時刻形式の妥当性は FormRequest にて事前にバリデーションされている前提。
+     *
+     * @param  string|null  $time     "H:i" 形式の時刻文字列（例: "09:00"）
+     * @param  \Carbon\Carbon  $workDate 勤務日
+     * @return \Carbon\Carbon|null
+     */
     private function toDateTime(?string $time, Carbon $workDate): ?Carbon
     {
         if (!$time) {
@@ -439,5 +455,113 @@ class AdminAttendanceController extends Controller
             'Y-m-d H:i',
             $workDate->toDateString() . ' ' . $time
         );
+    }
+
+    /**
+     * 月指定クエリ（month=Y-m）から対象月情報を解決する。
+     *
+     * - month があればその月の月初を基準日として採用
+     * - month がなければ当月の月初を採用
+     * - 返り値は CSV/画面で使いやすいように current/start/end/月文字列をまとめる
+     *
+     * ※ month の妥当性（date_format:Y-m）は FormRequest 側で担保する前提
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array{
+     *   current:\Carbon\Carbon,
+     *   start:\Carbon\Carbon,
+     *   end:\Carbon\Carbon,
+     *   month:string
+     * }
+     */
+    private function resolveTargetMonth(Request $request): array
+    {
+        $month = $request->query('month'); // "2026-01" or null
+
+        $current = $month
+            ? Carbon::createFromFormat('Y-m', $month)->startOfMonth()
+            : now()->startOfMonth();
+
+        $startOfMonth = $current->copy()->startOfMonth();
+        $endOfMonth   = $current->copy()->endOfMonth();
+
+        return [
+            'current' => $current,                     // 月初(Carbon)
+            'start'   => $startOfMonth,                // 月初(Carbon)
+            'end'     => $endOfMonth,                  // 月末(Carbon)
+            'month'   => $current->format('Y-m'),       // "2026-01"
+        ];
+    }
+
+
+    /**
+     * 指定された期間（月内想定）の全日付リストを生成する。
+     *
+     * 各要素は view/CSV で扱いやすいように
+     * - date: "Y-m-d"
+     * - label: "m/d(D)"（例: "01/01(木)"）
+     * を持つ配列として返す。
+     *
+     * @param  \Carbon\Carbon  $start  期間開始日（通常は月初）
+     * @param  \Carbon\Carbon  $end    期間終了日（通常は月末）
+     * @return \Illuminate\Support\Collection<int, array{date:string, label:string}>
+     */
+    private function buildMonthlyDates(Carbon $start, Carbon $end): Collection
+    {
+        return collect(CarbonPeriod::create($start->copy()->startOfMonth(), $end->copy()->endOfMonth()))
+            ->map(fn(Carbon $date) => [
+                'date'  => $date->toDateString(),
+                'label' => $date->translatedFormat('m/d(D)'),
+            ]);
+    }
+
+    /**
+     * 指定ユーザーの対象期間（月内想定）の勤怠を取得し、
+     * work_date（Y-m-d）をキーにしたマップ（連想配列）にして返す。
+     *
+     * 例: "2026-01-05" => Attendanceモデル
+     *
+     * ※ work_date は日付単位で一意（ユーザー×日付で1件）である前提。
+     *
+     * @param  int|string     $userId 対象ユーザーID
+     * @param  \Carbon\Carbon $start  期間開始日（通常は月初）
+     * @param  \Carbon\Carbon $end    期間終了日（通常は月末）
+     * @return \Illuminate\Support\Collection<string, \App\Models\Attendance>
+     */
+    private function getMonthlyAttendanceMap(int|string $userId, Carbon $start, Carbon $end): Collection
+    {
+        $attendances = Attendance::query()
+            ->where('user_id', $userId)
+            ->whereBetween('work_date', [$start->toDateString(), $end->toDateString()])
+            ->orderBy('work_date')
+            ->get();
+
+        return $attendances->keyBy(
+            fn(Attendance $attendance) => $attendance->work_date->toDateString()
+        );
+    }
+
+    /**
+     * 日付配列に勤怠情報を紐付ける。
+     *
+     * 日付ごとの配列（date, label）に対して、
+     * work_date をキーとした勤怠マップから該当日の勤怠を取得し、
+     * 'attendance' 要素として追加する。
+     *
+     * 勤怠が存在しない日は attendance に null が設定される。
+     *
+     * @param  \Illuminate\Support\Collection<int, array{date:string, label:string}>  $dates
+     * @param  \Illuminate\Support\Collection<string, \App\Models\Attendance>         $attendanceMap
+     * @return \Illuminate\Support\Collection<int, array{date:string, label:string, attendance:?Attendance}>
+     */
+    private function attachAttendancesToDates(
+        Collection $dates,
+        Collection $attendanceMap
+    ): Collection {
+        return $dates->map(function (array $date) use ($attendanceMap) {
+            return $date + [
+                'attendance' => $attendanceMap->get($date['date']),
+            ];
+        });
     }
 }

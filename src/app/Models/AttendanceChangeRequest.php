@@ -120,12 +120,27 @@ class AttendanceChangeRequest extends Model
      * @param  int  $attendance_id  判定対象の勤怠ID
      * @return bool 承認済みの場合 true、それ以外の場合 false
      */
-    public static function isApproved(int $attendance_id): bool
+    public static function isApprovedByAttendance(int $attendance_id): bool
     {
         return static::query()
             ->where('attendance_id', $attendance_id)
             ->where('status', ApplicationStatus::APPROVED)
             ->exists();
+    }
+
+    /**
+     * この勤怠修正申請が「承認済み」状態かどうかを判定する。
+     *
+     * 申請レコード自身が保持する status の値を基に判定を行い、
+     * 承認済み（ApplicationStatus::APPROVED）の場合は true を返す。
+     *
+     * DB クエリは発行せず、取得済みモデルの状態のみを参照する。
+     *
+     * @return bool 承認済みの場合 true、それ以外の場合 false
+     */
+    public function isApproved(): bool
+    {
+        return $this->status === ApplicationStatus::APPROVED;
     }
 
     /**

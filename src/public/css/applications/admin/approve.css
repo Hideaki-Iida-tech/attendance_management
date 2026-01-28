@@ -38,6 +38,12 @@
     height: 80px;
 }
 
+.approve-table-row-error {
+    background: #f00;
+    color: #fff;
+    height: auto;
+}
+
 .approve-table-col-title {
     padding-left: 50px;
     text-align: left;
