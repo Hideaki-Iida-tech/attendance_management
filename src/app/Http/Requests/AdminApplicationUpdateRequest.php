@@ -3,12 +3,14 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\AttendanceChangeRequest;
 
-class AdminApplicationShowRequest extends FormRequest
+class AdminApplicationUpdateRequest extends FormRequest
 {
     /**
      * リクエストの認可を行う。
-     * 未ログインの場合と、管理者兼ゲインでログインしていない場合は、
+     * 未ログインの場合と管理者権限でログインしていない場合、
+     * 該当する申請レコードが存在しない場合と、申請が承認済みの場合は
      * リクエストを拒否
      *
      * @return bool
@@ -17,7 +19,11 @@ class AdminApplicationShowRequest extends FormRequest
     {
         // 管理者でログインしていることだけをここで担保
         $user = $this->user();
-        return $user && $user->isAdmin();
+        if (!$user || !$user->isAdmin()) return false;
+
+        $id = (int) $this->route('attendance_correct_request');
+        $req = AttendanceChangeRequest::find($id);
+        return $req && !$req->isApproved();
     }
 
     /**

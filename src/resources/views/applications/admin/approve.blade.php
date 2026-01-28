@@ -23,6 +23,16 @@
                     <td colspan="3" class="approve-table-col-second spacing">{{ $attendanceChangeRequest->user->name }}</td>
                 </tr>
 
+                @if ($errors->any())
+                <tr class="approve-table-row-error">
+                    <ul class="error-list">
+                        @foreach ($errors->all() as $message)
+                        <li>{{ $message }}</li>
+                        @endforeach
+                    </ul>
+                </tr>
+                @endif
+
                 <tr class="approve-table-row">
                     <th class="approve-table-col-title">日付</th>
                     <td class="approve-table-col-second spacing">{{ $attendanceChangeRequest->formated_year }}</td>

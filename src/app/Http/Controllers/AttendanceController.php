@@ -418,7 +418,7 @@ class AttendanceController extends Controller
 
             $isPending = AttendanceChangeRequest::existsPending($attendance->id);
 
-            $isApproved = AttendanceChangeRequest::isApproved($attendance->id);
+            $isApproved = AttendanceChangeRequest::isApprovedByAttendance($attendance->id);
             if ($isApproved) {
                 $approvedRequest =
                     AttendanceChangeRequest::where('attendance_id', $attendance->id)->first();
@@ -442,7 +442,7 @@ class AttendanceController extends Controller
                     AttendanceChangeRequest::where('attendance_id', $attendance->id)->first();
             }
 
-            $isApproved = AttendanceChangeRequest::isApproved($attendance->id);
+            $isApproved = AttendanceChangeRequest::isApprovedByAttendance($attendance->id);
             if ($isApproved) {
                 $approvedRequest =
                     AttendanceChangeRequest::where('attendance_id', $attendance->id)->first();
