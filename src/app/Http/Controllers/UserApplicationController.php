@@ -8,13 +8,19 @@ use App\Enums\ApplicationStatus;
 
 class UserApplicationController extends Controller
 {
+    /** 
+     * 一般ユーザー/管理者用申請一覧画面を表示するメソッド。
+     *
+     * @param UserApplicationRequest $request
+     * @return \Illuminate\View\View
+     */
     public function index(UserApplicationIndexRequest $request)
     {
         $userId = auth()->user()->id;
 
-        $isAdminContext = $request->attributes->get('is_admin_context', false);
+        $isAdminContext = (bool)$request->attributes->get('is_admin_context', false);
 
-        $tabValue = $request->query('page');
+        $tabValue = $request->query('tab');
 
         if (is_null($tabValue) || $tabValue === '') {
             $status = ApplicationStatus::PENDING->value;
@@ -22,41 +28,34 @@ class UserApplicationController extends Controller
             $status = ApplicationStatus::PENDING->value;
         } elseif ($tabValue === ApplicationStatus::APPROVED->name) {
             $status = ApplicationStatus::APPROVED->value;
-        }
-
-        // 管理者の場合
-        if ($isAdminContext) {
-
-            $layout = 'layouts.admin-menu';
-
-            $attendanceChangeRequests = AttendanceChangeRequest::with('user')
-                ->where('status', $status)
-                ->orderBy('created_at', 'asc')
-                ->get();
-
-            return view('applications.admin.index', compact(
-                'layout',
-                'attendanceChangeRequests',
-                'status'
-            ));
-
-            //一般ユーザーの場合
         } else {
-            $layout = 'layouts.user-menu';
+            // 想定外の値は安全側にフォールバック
+            $status = ApplicationStatus::PENDING->value;
+        }
 
+        $layout = $isAdminContext ? 'layouts.admin-menu' : 'layouts.user-menu';
 
+        $view = $isAdminContext ? 'applications.admin.index' : 'applications.index';
 
-            $attendanceChangeRequests = AttendanceChangeRequest::with('user')
-                ->where('user_id', $userId)
-                ->where('status', $status)
-                ->orderBy('created_at', 'asc')
-                ->get();
+        $query = AttendanceChangeRequest::query()
+            ->with('user')
+            ->where('status', $status)
+            ->orderBy('created_at', 'asc');
 
-            return view('applications.index', compact(
+        // 一般ユーザーの場合
+        if (!$isAdminContext) {
+            $query->where('user_id', $userId);
+        }
+
+        $attendanceChangeRequests = $query->get();
+
+        return view(
+            $view,
+            compact(
                 'layout',
                 'attendanceChangeRequests',
                 'status'
-            ));
-        }
+            )
+        );
     }
 }

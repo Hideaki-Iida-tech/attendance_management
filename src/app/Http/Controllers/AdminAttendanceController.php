@@ -7,33 +7,24 @@ use App\Http\Requests\AdminAttendanceUpdateRequest;
 use App\Http\Requests\AdminStaffMonthlyAttendanceIndexRequest;
 use App\Models\Attendance;
 use App\Models\User;
-use Illuminate\Http\Request;
 use App\Models\AttendanceChangeRequest;
 use App\Enums\ApplicationStatus;
 use App\Enums\ActionType;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Cookie;
-use Illuminate\Support\Collection;
 
 class AdminAttendanceController extends Controller
 {
     /**
      * 管理者用 勤怠一覧画面を表示する。
      *
-     * クエリパラメータ `day`（Y-m-d形式）で指定された日付、
-     * または未指定の場合は当日を基準日として、
-     * 該当日の勤怠情報をユーザー・休憩情報とともに取得する。
-     *
-     * - ユーザー情報を eager load することで N+1 問題を回避
-     * - 休憩情報は break_start_at 昇順で取得
-     * - 一覧は user_id 昇順で表示
-     * - 前日・翌日遷移用の日付も併せて生成
-     *
-     * @param  \App\Http\Requests\AdminAttendanceIndexRequest  $request
+     * @param  \App\Http\Requests\AdminAttendanceIndexRequest $request
      * @return \Illuminate\View\View
      */
     public function index(AdminAttendanceIndexRequest $request)
@@ -75,17 +66,7 @@ class AdminAttendanceController extends Controller
     /**
      * 管理者用：特定スタッフの月次勤怠一覧を表示する。
      *
-     * ルートパラメータで指定されたスタッフ（user）について、
-     * クエリパラメータ `month`（Y-m形式）で指定された月、
-     * または未指定の場合は当月を対象として勤怠情報を取得する。
-     *
-     * 対象月の全日付を生成し、各日付に対して該当する勤怠データを
-     * 紐付けることで、勤怠が存在しない日も含めた月次一覧を構築する。
-     *
-     * - 勤怠データは work_date 昇順で取得
-     * - 前月・翌月遷移用の月情報も併せて生成
-     *
-     * @param  \App\Http\Requests\AdminStaffMonthlyAttendanceIndexRequest  $request
+     * @param  \App\Http\Requests\AdminStaffMonthlyAttendanceIndexRequest $request
      * @return \Illuminate\View\View
      */
     public function staffMonthlyIndex(AdminStaffMonthlyAttendanceIndexRequest $request)
@@ -127,18 +108,7 @@ class AdminAttendanceController extends Controller
     /**
      * 管理者用：特定スタッフの月次勤怠データを CSV 形式でエクスポートする。
      *
-     * ルートパラメータで指定されたスタッフについて、
-     * クエリパラメータ `month`（Y-m形式）で指定された月、
-     * または未指定の場合は当月を対象として勤怠データを取得する。
-     *
-     * 対象月の全日付を生成し、各日付に対応する勤怠情報を紐付けた上で、
-     * CSV 形式のストリームレスポンスとして出力する。
-     *
-     * - 勤怠が存在しない日も含めて出力
-     * - CSV は UTF-8（BOM付き）で生成し、Excelでの文字化けを防止
-     * - ダウンロード完了検知用に Cookie（csv_downloaded）を付与
-     *
-     * @param  \App\Http\Requests\AdminStaffMonthlyAttendanceIndexRequest  $request
+     * @param  \App\Http\Requests\AdminStaffMonthlyAttendanceIndexRequest $request
      * @return \Symfony\Component\HttpFoundation\StreamedResponse
      */
     public function exportStaffMonthlyCsv(AdminStaffMonthlyAttendanceIndexRequest $request)
@@ -230,13 +200,18 @@ class AdminAttendanceController extends Controller
         return $response;
     }
 
+    /**
+     * 管理者による勤怠情報の修正処理を行う。
+     *
+     * @param  AdminAttendanceUpdateRequest $request
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
     public function update(AdminAttendanceUpdateRequest $request)
     {
         $attendance = Attendance::with('breaks')->findOrFail($request->route('id'));
-
-        if (!$attendance) {
-            return;
-        };
 
         $requestItem = AttendanceChangeRequest::where(
             'attendance_id',
@@ -244,8 +219,12 @@ class AdminAttendanceController extends Controller
         )->with('attendance', 'breaks')->first();
 
 
+        $hasPending = AttendanceChangeRequest::where('attendance_id', $attendance->id)
+            ->where('status', ApplicationStatus::PENDING)
+            ->exists();
+
         // 既に承認待ちがあるなら更新させない
-        if ($requestItem && $requestItem->status === ApplicationStatus::PENDING) {
+        if ($hasPending) {
             return back()->withErrors([
                 'error' => 'この勤怠は現在承認待ちの申請があるため、修正申請を更新できません。',
             ]);
@@ -273,11 +252,15 @@ class AdminAttendanceController extends Controller
             ];
 
             // 片方だけ入力はNGにするために例外を投げる
-            if (!$clockInAt xor !$clockOutAt) {
+            if ($clockInAt === null xor $clockOutAt === null) {
                 throw ValidationException::withMessages([
                     'clock_in_at' => '出勤・退勤は両方入力してください。',
                 ]);
             }
+
+            // 更新前に old を退避
+            $oldClockInAt = $attendance->clock_in_at;
+            $oldClockOutAt = $attendance->clock_out_at;
 
             // 出退勤時刻を更新
             if ($clockInAt && $clockOutAt) {
@@ -291,24 +274,28 @@ class AdminAttendanceController extends Controller
                 'work_date' => $attendance->work_date,
                 'status' => ApplicationStatus::APPROVED,
                 'reason' => $request->input('reason'),
-                'reviewed_by' => auth()->user()->id,
+                'reviewed_by' => auth()->id(),
                 'reviewed_at' => now(),
                 'review_comment' => null,
             ];
 
-            $targetRequest = $requestItem ? tap($requestItem)->update($headerData) :
-                AttendanceChangeRequest::create($headerData);
+            if ($requestItem) {
+                $requestItem->update($headerData);
+                $targetRequest = $requestItem;
+            } else {
+                $targetRequest = AttendanceChangeRequest::create($headerData);
+            }
 
             // 出退勤時刻のデータをセット
             $attendanceData = [
                 'new_clock_in_at' => $clockInAt,
                 'new_clock_out_at' => $clockOutAt,
-                'old_clock_in_at' => $attendance->clock_in_at,
-                'old_clock_out_at' => $attendance->clock_out_at,
+                'old_clock_in_at' => $oldClockInAt,
+                'old_clock_out_at' => $oldClockOutAt,
             ];
 
             // 出退勤時刻をDBに保存
-            if ($clockInAt && $clockOutAt) {
+            if ($clockInAt !== null && $clockOutAt !== null) {
                 $targetRequest->attendance()->updateOrCreate(
                     [
                         'request_id' => $targetRequest->id
@@ -326,6 +313,10 @@ class AdminAttendanceController extends Controller
             $existingBreaks = $attendance->breaks->keyBy('id');
 
             foreach ($breakInputs as $idx => $row) {
+
+                $oldBreakStart = null;
+                $oldBreakEnd = null;
+
                 $start = $this->toDateTime(
                     $row['start'] ?? null,
                     $attendance->work_date
@@ -336,11 +327,10 @@ class AdminAttendanceController extends Controller
                     $attendance->work_date
                 );
 
-                $hasInput = $start && $end;
-                $hasNone = !$start && !$end;
+                $hasNone = ($start === null) && ($end === null);
 
                 // 片方だけ入力は例外を投げる
-                if (!$start xor !$end) {
+                if ($start === null xor $end === null) {
                     throw ValidationException::withMessages([
                         "breaks.$idx.start" => '休憩開始・終了は両方入力してください。',
                     ]);
@@ -362,9 +352,23 @@ class AdminAttendanceController extends Controller
                             ]);
                         }
 
+                        // 削除前に old を退避
+                        $oldBreakStart = $break->break_start_at;
+                        $oldBreakEnd = $break->break_end_at;
+
                         // レコードを削除
                         $break->delete();
                         $action = ActionType::DELETE;
+
+                        $breakData = [
+                            'action' => $action,
+                            'target_break_id' => $breakId,
+                            'new_break_start_at' => null,
+                            'new_break_end_at' => null,
+                            'old_break_start_at' => $oldBreakStart,
+                            'old_break_end_at' => $oldBreakEnd,
+                        ];
+                        $targetRequest->breaks()->create($breakData);
                     }
 
                     continue; // 新規枠で未入力は何もしない or 削除後は以下のコードをスキップ
@@ -389,6 +393,11 @@ class AdminAttendanceController extends Controller
                             "breaks.$idx.start" => '指定された休憩データが見つかりません。'
                         ]);
                     }
+
+                    // 更新前に old を退避
+                    $oldBreakStart = $break->break_start_at;
+                    $oldBreakEnd = $break->break_end_at;
+
                     // レコード更新
                     $break->update(
                         [
@@ -399,15 +408,13 @@ class AdminAttendanceController extends Controller
                     $action = ActionType::UPDATE;
                 }
 
-                $old = !empty($row['id']) ? $existingBreaks->get((int)$row['id']) : null;
-
                 $breakData = [
                     'action' => $action,
                     'target_break_id' => $row['id'] ?? null,
                     'new_break_start_at' => $start,
                     'new_break_end_at' => $end,
-                    'old_break_start_at' => $old?->break_start_at,
-                    'old_break_end_at' => $old?->break_end_at,
+                    'old_break_start_at' => $oldBreakStart,
+                    'old_break_end_at' => $oldBreakEnd,
                 ];
 
                 $targetRequest->breaks()->create($breakData);
@@ -425,7 +432,7 @@ class AdminAttendanceController extends Controller
             // DBをロールバック
             DB::rollback();
             Log::error('DB処理で例外が発生', [
-                'exception' => $e,
+                'exception' => $e->getMessage(),
             ]);
             return back()->withErrors(['error' => '修正処理に失敗しました。もう一度お試しください。']);
         }
@@ -433,12 +440,6 @@ class AdminAttendanceController extends Controller
 
     /**
      * 勤務日と時刻文字列から Carbon の日時オブジェクトを生成する。
-     *
-     * 勤務日（workDate）に対して、"H:i" 形式の時刻文字列を結合し、
-     * "Y-m-d H:i" 形式の日時として Carbon インスタンスを生成する。
-     *
-     * 時刻が未指定（null または空文字）の場合は null を返す。
-     * 時刻形式の妥当性は FormRequest にて事前にバリデーションされている前提。
      *
      * @param  string|null  $time     "H:i" 形式の時刻文字列（例: "09:00"）
      * @param  \Carbon\Carbon  $workDate 勤務日
@@ -459,12 +460,6 @@ class AdminAttendanceController extends Controller
 
     /**
      * 月指定クエリ（month=Y-m）から対象月情報を解決する。
-     *
-     * - month があればその月の月初を基準日として採用
-     * - month がなければ当月の月初を採用
-     * - 返り値は CSV/画面で使いやすいように current/start/end/月文字列をまとめる
-     *
-     * ※ month の妥当性（date_format:Y-m）は FormRequest 側で担保する前提
      *
      * @param  \Illuminate\Http\Request  $request
      * @return array{
@@ -497,11 +492,6 @@ class AdminAttendanceController extends Controller
     /**
      * 指定された期間（月内想定）の全日付リストを生成する。
      *
-     * 各要素は view/CSV で扱いやすいように
-     * - date: "Y-m-d"
-     * - label: "m/d(D)"（例: "01/01(木)"）
-     * を持つ配列として返す。
-     *
      * @param  \Carbon\Carbon  $start  期間開始日（通常は月初）
      * @param  \Carbon\Carbon  $end    期間終了日（通常は月末）
      * @return \Illuminate\Support\Collection<int, array{date:string, label:string}>
@@ -518,10 +508,6 @@ class AdminAttendanceController extends Controller
     /**
      * 指定ユーザーの対象期間（月内想定）の勤怠を取得し、
      * work_date（Y-m-d）をキーにしたマップ（連想配列）にして返す。
-     *
-     * 例: "2026-01-05" => Attendanceモデル
-     *
-     * ※ work_date は日付単位で一意（ユーザー×日付で1件）である前提。
      *
      * @param  int|string     $userId 対象ユーザーID
      * @param  \Carbon\Carbon $start  期間開始日（通常は月初）
@@ -543,12 +529,6 @@ class AdminAttendanceController extends Controller
 
     /**
      * 日付配列に勤怠情報を紐付ける。
-     *
-     * 日付ごとの配列（date, label）に対して、
-     * work_date をキーとした勤怠マップから該当日の勤怠を取得し、
-     * 'attendance' 要素として追加する。
-     *
-     * 勤怠が存在しない日は attendance に null が設定される。
      *
      * @param  \Illuminate\Support\Collection<int, array{date:string, label:string}>  $dates
      * @param  \Illuminate\Support\Collection<string, \App\Models\Attendance>         $attendanceMap

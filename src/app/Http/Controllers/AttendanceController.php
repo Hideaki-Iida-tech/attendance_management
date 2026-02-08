@@ -6,27 +6,23 @@ use App\Http\Requests\AttendanceStampRequest;
 use App\Http\Requests\AttendanceIndexRequest;
 use App\Http\Requests\AttendanceShowRequest;
 use App\Enums\AttendanceState;
+use App\Enums\ApplicationStatus;
 use App\Models\Attendance;
 use App\Models\AttendanceChangeRequest;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
-use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Collection;
+use Illuminate\Database\QueryException;
+use Exception;
+use RuntimeException;
+use Symfony\Component\Console\Exception\RuntimeException as ExceptionRuntimeException;
 
 class AttendanceController extends Controller
 {
     /**
      * 勤怠登録画面を表示する。
-     *
-     * ログイン中ユーザーの当日の勤怠状態を判定し、
-     * 状態に応じた画面表示用データを生成して勤怠登録ビューを返す。
-     *
-     * AttendanceState が FINISHED の場合は、
-     * 当日の勤怠レコードを取得し、勤務日および退勤時刻を表示用に整形する。
-     * 勤怠レコードが存在しない場合は、退勤時刻として現在時刻を設定する。
-     *
-     * 画面側での未定義変数エラーを防ぐため、
-     * 勤務日および退勤時刻は初期値として null を設定した上で view に渡す。
      *
      * @return \Illuminate\View\View
      */
@@ -63,93 +59,69 @@ class AttendanceController extends Controller
     /**
      * 勤怠の打刻処理を行う。
      *
-     * リクエストで指定された action（出勤・退勤・休憩開始・休憩終了）に応じて、
-     * 現在の勤怠状態を判定し、許可された操作のみを実行する。
-     *
-     * 不正な状態遷移（例：勤務外での退勤、休憩中以外での休憩終了など）の場合は、
-     * 対応する処理を実行せず、画面をリダイレクトする。
-     *
-     * action に想定外の値が指定された場合は、400 Bad Request を返す。
-     *
      * @param \App\Http\Requests\AttendanceStampRequest $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function stamp(AttendanceStampRequest $request)
     {
-        $validated = $request->validated('action');
+        $validated = $request->validated();
         $action = $validated['action']; // 'clock_in'など
-        switch ($action) {
-            case 'clock_in':
-                if ($this->attendanceStateResolver() === AttendanceState::OFF_DUTY) {
-                    $this->clockIn();
-                }
-                break;
-            case 'clock_out':
-                if ($this->attendanceStateResolver() === AttendanceState::WORKING) {
-                    $this->clockOut();
-                }
-                break;
-            case 'break_start':
-                if ($this->attendanceStateResolver() === AttendanceState::WORKING) {
-                    $this->breakStart();
-                }
-                break;
-            case 'break_end':
-                if ($this->attendanceStateResolver() === AttendanceState::ON_BREAK) {
-                    $this->breakEnd();
-                }
-                break;
-            default:
-                abort(400, 'Invalid action');
+        $state = $this->attendanceStateResolver();
+        try {
+            switch ($action) {
+                case 'clock_in':
+                    if ($state === AttendanceState::OFF_DUTY) {
+                        $this->clockIn();
+                    }
+                    break;
+                case 'clock_out':
+                    if ($state === AttendanceState::WORKING) {
+                        $this->clockOut();
+                    }
+                    break;
+                case 'break_start':
+                    if ($state === AttendanceState::WORKING) {
+                        $this->breakStart();
+                    }
+                    break;
+                case 'break_end':
+                    if ($state === AttendanceState::ON_BREAK) {
+                        $this->breakEnd();
+                    }
+                    break;
+                default:
+                    abort(400, 'Invalid action');
+            }
+        } catch (\RuntimeException $e) {
+            return redirect()->back()->withErrors(['error' => $e->getMessage()]);
         }
-        return redirect()->back();
+        return redirect()->back()->with('message', '打刻しました。');
     }
 
     /**
      * ログイン中ユーザーの当日の勤怠状態を判定する。
-     *
-     * 勤怠テーブルおよび休憩情報を基に、
-     * 当日の勤怠状態を AttendanceState（OFF_DUTY / WORKING / ON_BREAK / FINISHED）
-     * のいずれかとして判定・返却する。
-     *
-     * 判定は以下の優先順で行う：
-     * - OFF_DUTY（勤務外）
-     * - WORKING（勤務中）
-     * - ON_BREAK（休憩中）
-     * - FINISHED（勤務終了）
-     *
-     * いずれの条件にも該当しない場合は、
-     * 安全側のフォールバックとして OFF_DUTY を返す。
      * 
-     * 未ログイン状態で呼び出された場合は、
-     * 不正なリクエストとして 400 Bad Request を返す。
-     *
      * @return \App\Enums\AttendanceState
      */
     private function attendanceStateResolver(): AttendanceState
     {
-
-        if (!auth()->check()) {
-            abort(400, 'Invalid action');
-        }
-
         $user = auth()->user();
         $userId = $user->id;
 
-        if (Attendance::isOffDuty($userId, Carbon::parse(today()))) {
-            return attendanceState::OFF_DUTY;
+        if (Attendance::isOffDuty($userId, today())) {
+            return AttendanceState::OFF_DUTY;
         }
 
-        if (Attendance::isWorking($userId, Carbon::parse(today()))) {
-            return attendanceState::WORKING;
+        if (Attendance::isFinished($userId, today())) {
+            return AttendanceState::FINISHED;
         }
 
-        if (Attendance::isOnBreak($userId, Carbon::parse(today()))) {
-            return attendanceState::ON_BREAK;
+        if (Attendance::isOnBreak($userId, today())) {
+            return AttendanceState::ON_BREAK;
         }
 
-        if (Attendance::isFinished($userId, Carbon::parse(today()))) {
-            return attendanceState::FINISHED;
+        if (Attendance::isWorking($userId, today())) {
+            return AttendanceState::WORKING;
         }
 
         return AttendanceState::OFF_DUTY;
@@ -158,24 +130,11 @@ class AttendanceController extends Controller
     /**
      * 出勤打刻を行う。
      *
-     * ログイン中ユーザーの当日の勤怠レコードを新規作成し、
-     * 出勤時刻（clock_in_at）を現在時刻で登録する。
-     *
-     * 未ログイン状態で呼び出された場合は、
-     * 不正なリクエストとして 400 Bad Request を返す。
-     * 
-     * データベース処理中に例外が発生した場合は、
-     * 例外を握りつぶさずにログへ記録し、呼び出し元へは伝播させない。
-     *
      * @return void
+     * @throws \RuntimeException
      */
     private function clockIn()
     {
-
-        if (!auth()->check()) {
-            abort(400, 'Invalid action');
-        }
-
         try {
             $data = [
                 'user_id' => auth()->user()->id,
@@ -183,168 +142,239 @@ class AttendanceController extends Controller
                 'clock_in_at' => now(),
             ];
             Attendance::create($data);
-        } catch (Exception $e) {
-            Log::error('DB処理で例外が発生', [
-                'exception' => $e,
+        } catch (QueryException $e) {
+            // 例：user_id + work_date の UNIQUE 制約違反など
+            $errorCode = (int)($e->errorInfo[1] ?? 0);
+
+            Log::warning('clockIn DB error', [
+                'user_id' => auth()->id(),
+                'date' => (string)today(),
+                'sql_error_code' => $errorCode,
+                'message' => $e->getMessage(),
             ]);
+
+            if ($errorCode === 1062) {
+                // すでに出勤レコードがあるケース
+                throw new RuntimeException('本日はすでに出勤打刻済みです。画面を更新して状態をご確認ください。', 0, $e);
+            }
+
+            throw new RuntimeException('出勤打刻に失敗しました。時間をおいて再度お試しください。', 0, $e);
+        } catch (\Throwable $e) {
+            Log::error('clockIn unexpected error', [
+                'user_id' => auth()->id(),
+                'date' => (string)today(),
+                'message' => $e->getMessage(),
+            ]);
+
+            throw new RuntimeException('出勤打刻に失敗しました。管理者に連絡してください。', 0, $e);
         }
     }
 
     /**
      * 退勤打刻を行う。
      *
-     * ログイン中ユーザーの当日の勤怠レコードを取得し、
-     * 存在する場合にのみ退勤時刻（clock_out_at）を現在時刻で更新する。
-     *
-     * 当日の勤怠レコードが存在しない場合は、
-     * 何も処理を行わずにメソッドを終了する。
-     *
-     * 未ログイン状態で呼び出された場合は、
-     * 不正なリクエストとして 400 Bad Request を返す。
-     * 
-     * データベース処理中に例外が発生した場合は、
-     * 例外内容をログへ記録し、呼び出し元へは伝播させない。
-     *
      * @return void
+     * @throws \RuntimeException
      */
     private function clockOut()
     {
-
-        if (!auth()->check()) {
-            abort(400, 'Invalid action');
-        }
-
         try {
             $attendance = Attendance::where('user_id', auth()->user()->id)
                 ->whereDate('work_date', today())->first();
 
             if (!$attendance) {
-                return;
+                // 出勤していないのに退勤しようとしたケース
+                throw new RuntimeException('本日は出勤打刻が行われていません。');
+            }
+
+            if (!is_null($attendance->clock_out_at)) {
+                // すでに退勤済み
+                throw new RuntimeException('本日はすでに退勤打刻済みです。');
             }
 
             $data = [
                 'clock_out_at' => now(),
             ];
             $attendance->update($data);
-        } catch (Exception $e) {
-            Log::error('DB処理で例外が発生', [
-                'exception' => $e,
+        } catch (QueryException $e) {
+            Log::warning('clockOut DB error', [
+                'user_id' => auth()->id(),
+                'date' => (string)today(),
+                'message' => $e->getMessage(),
             ]);
+
+            throw new RuntimeException(
+                '退勤打刻に失敗しました。時間をおいて再度お試しください。',
+                0,
+                $e
+            );
+        } catch (\Throwable $e) {
+            Log::error('clockOut unexpected error', [
+                'user_id' => auth()->id(),
+                'date' => (string)today(),
+                'message' => $e->getMessage(),
+            ]);
+
+            if ($e instanceof RuntimeException) {
+                throw $e;
+            }
+
+            throw new RuntimeException(
+                '退勤打刻に失敗しました。管理者に連絡してください。',
+                0,
+                $e
+            );
         }
     }
 
     /**
      * 休憩開始打刻を行う。
      *
-     * ログイン中ユーザーの当日の勤怠レコードを取得し、
-     * 存在する場合にのみ休憩開始時刻（break_start_at）を
-     * breaks テーブルへ新規登録する。
-     *
-     * 当日の勤怠レコードが存在しない場合は、
-     * 何も処理を行わずにメソッドを終了する。
-     *
-     * 未ログイン状態で呼び出された場合は、
-     * 不正なリクエストとして 400 Bad Request を返す。
-     * 
-     * データベース処理中に例外が発生した場合は、
-     * 例外内容をログへ記録し、呼び出し元へは伝播させない。
-     *
      * @return void
+     * @throws \RuntimeException
      */
     private function breakStart()
     {
-
-        if (!auth()->check()) {
-            abort(400, 'Invalid action');
-        }
-
         try {
             $attendance = Attendance::with('breaks')
                 ->where('user_id', auth()->user()->id)
                 ->whereDate('work_date', today())->first();
 
             if (!$attendance) {
-                return;
+                // 出勤していない
+                throw new RuntimeException('本日は出勤打刻が行われていません。');
+            }
+
+            if (is_null($attendance->clock_in_at)) {
+                // レコードはあるが出勤時刻がない（不整合/想定外）
+                throw new RuntimeException('出勤打刻が確認できません。画面を更新して状態をご確認ください。');
+            }
+            if (!is_null($attendance->clock_out_at)) {
+                // 退勤済み
+                throw new RuntimeException('すでに退勤済みのため、休憩開始できません。');
+            }
+
+            // 未終了の休憩がある＝すでに休憩中
+            $hasOngoingBreak = $attendance->breaks->contains(
+                fn($break) => !is_null($break->break_start_at) && is_null($break->break_end_at)
+            );
+
+            if ($hasOngoingBreak) {
+                throw new RuntimeException('すでに中継中のため、休憩開始できません。');
             }
 
             $data = ['break_start_at' => now()];
             $attendance->breaks()->create($data);
-        } catch (Exception $e) {
-            Log::error('DB処理で例外が発生', [
-                'exception' => $e,
+        } catch (QueryException $e) {
+            Log::warning('breakStart DB error', [
+                'user_id' => auth()->id(),
+                'date' => (string)today(),
+                'message' => $e->getMessage(),
             ]);
+
+            throw new RuntimeException(
+                '休憩開始に失敗しました。時間をおいて再度お試しください。',
+                0,
+                $e
+            );
+        } catch (\Throwable $e) {
+            Log::error('breakStart unexpected error', [
+                'user_id' => auth()->id(),
+                'date' => (string)today(),
+                'message' => $e->getMessage(),
+            ]);
+
+            if ($e instanceof RuntimeException) {
+                throw $e; // 想定内メッセージは潰さない
+            }
+
+            throw new RuntimeException(
+                '休憩開始に失敗しました。管理者に連絡してください。',
+                0,
+                $e
+            );
         }
     }
 
     /**
      * 休憩終了打刻を行う。
      *
-     * ログイン中ユーザーの当日の勤怠レコードを取得し、
-     * 休憩開始時刻は存在し、休憩終了時刻が未設定の
-     * 最新の休憩レコードを対象として休憩終了時刻を更新する。
-     *
-     * 当日の勤怠レコード、または対象となる進行中の休憩レコードが
-     * 存在しない場合は、何も処理を行わずにメソッドを終了する。
-     *
-     * 未ログイン状態で呼び出された場合は、
-     * 不正なリクエストとして 400 Bad Request を返す。
-     * 
-     * データベース処理中に例外が発生した場合は、
-     * 例外内容をログへ記録し、呼び出し元へは伝播させない。
-     *
      * @return void
+     * @throws \RuntimeException
      */
     private function breakEnd()
     {
-
-        if (!auth()->check()) {
-            abort(400, 'Invalid action');
-        }
-
         try {
-            $attendance = Attendance::where('user_id', auth()->user()->id)
+            $attendance = Attendance::with('breaks')
+                ->where('user_id', auth()->user()->id)
                 ->whereDate('work_date', today())->first();
 
             if (!$attendance) {
-                return;
+                // 出勤していない
+                throw new RuntimeException('本日は出勤打刻が行われていません。');
             }
 
+            if (is_null($attendance->clock_in_at)) {
+                // レコードはあるが出勤時刻がない（不整合）
+                throw new RuntimeException('出勤打刻が確認できません。画面を更新して状態をご確認ください。');
+            }
+
+            if (!is_null($attendance->clock_out_at)) {
+                // 退勤済み
+                throw new RuntimeException('すでに退勤済みのため、休憩終了ができません。');
+            }
+
+            // 進行中（開始済み・未終了）の休憩を取得
             $break = $attendance->breaks()
                 ->whereNotNull('break_start_at')
                 ->whereNull('break_end_at')
                 ->orderByDesc('break_start_at')
                 ->first();
 
+            // 休憩中じゃない（押し間違い）
             if (!$break) {
-                return;
+                throw new RuntimeException('休憩中ではないため、休憩終了できません。');
             }
 
             $data = ['break_end_at' => now()];
             $break->update($data);
-        } catch (Exception $e) {
-            Log::error('DB処理で例外が発生', [
-                'exception' => $e,
+        } catch (QueryException $e) {
+            Log::warning('breakEnd DB error', [
+                'user_id' => auth()->id(),
+                'date' => (string)today(),
+                'message' => $e->getMessage(),
             ]);
+
+            throw new RuntimeException(
+                '休憩終了に失敗しました。時間をおいて再度お試しください。',
+                0,
+                $e
+            );
+        } catch (\Throwable $e) {
+            Log::error('breakEnd unexpected error', [
+                'user_id' => auth()->id(),
+                'date' => (string)today(),
+                'message' => $e->getMessage(),
+            ]);
+
+            if ($e instanceof RuntimeException) {
+                throw $e; // 想定内メッセージは潰さない
+            }
+
+            throw new RuntimeException(
+                '休憩終了に失敗しました。管理者に連絡7してください。',
+                0,
+                $e
+            );
         }
     }
 
     /**
      * 一般ユーザー向けの勤怠一覧画面を表示する。
      *
-     * クエリパラメータ `month`（Y-m 形式）を受け取り、
-     * 指定された年月の勤怠データを一覧表示する。
-     * `month` が未指定の場合は、現在の年月を対象とする。
-     *
-     * 表示対象の年月に対して、
-     * - 前月 / 次月の年月文字列を生成
-     * - 月初〜月末の日付一覧を作成
-     * - ログインユーザーの勤怠情報を日付単位でマッピング
-     *
-     * @param  \App\Http\Requests\Attendance\AttendanceIndexRequest  $request
+     * @param  \App\Http\Requests\AttendanceIndexRequest $request
      * @return \Illuminate\Contracts\View\View
      *
-     * @throws \Symfony\Component\HttpKernel\Exception\HttpException
-     *         未ログイン時に不正なアクセスが行われた場合
      */
     public function index(AttendanceIndexRequest $request)
     {
@@ -353,48 +383,22 @@ class AttendanceController extends Controller
         $user = auth()->user();
         $userId = $user->id;
 
-        $month = $request->query('month'); // "2026-01" or null
+        $target = $this->resolveTargetMonth($request);
 
-        $current = $month ?
-            Carbon::createFromFormat('Y-m', $month)->startOfMonth()
-            : now()->startOfMonth();
-
+        $current = $target['current'];
         $yearMonth = $current->format('Y/m');
 
         $prevMonth = $current->copy()->subMonth()->format('Y-m');
         $nextMonth = $current->copy()->addMonth()->format('Y-m');
 
-        $baseDate = Carbon::parse($current); // 表示したい年月
-        $startOfMonth = $baseDate->copy()->startOfMonth();
-        $endOfMonth = $baseDate->copy()->endOfMOnth();
+        $startOfMonth = $target['start'];
+        $endOfMonth = $target['end'];
 
-        $dates = collect(
-            CarbonPeriod::create(
-                $baseDate->copy()->startOfMonth(),
-                $baseDate->copy()->endOfMonth()
-            )
-        )->map(function (Carbon $date) {
-            return [
-                'date' => $date->toDateString(),
-                'label' => $date->translatedFormat('m/d(D)'),
-            ];
-        });
+        $dates = $this->buildMonthlyDates($startOfMonth, $endOfMonth);
 
-        $attendances = Attendance::where('user_id', $userId)
-            ->whereBetween('work_date', [$startOfMonth, $endOfMonth])
-            ->orderBy('work_date')
-            ->get();
+        $attendanceMap = $this->getMonthlyAttendanceMap($userId, $startOfMonth, $endOfMonth);
 
-        $attendanceMap = $attendances->keyBy(fn($key)
-        => $key->work_date?->toDateString());
-
-        $dates = $dates->map(function ($date) use ($attendanceMap) {
-            $attendance = $attendanceMap->get($date['date']);
-
-            return array_merge($date, [
-                'attendance' => $attendance,
-            ]);
-        });
+        $dates = $this->attachAttendancesToDates($dates, $attendanceMap);
 
         return view('attendance.index', compact(
             'layout',
@@ -405,6 +409,12 @@ class AttendanceController extends Controller
         ));
     }
 
+    /**
+     * 勤怠詳細画面を表示する。
+     *
+     * @param  \App\Http\Requests\AttendanceShowRequest $request
+     * @return \Illuminate\Contracts\View\View
+     */
     public function show(AttendanceShowRequest $request)
     {
         $attendance = Attendance::with('breaks', 'user')
@@ -412,42 +422,37 @@ class AttendanceController extends Controller
 
         $isAdminContext = (bool)$request->attributes->get('is_admin_context', false);
 
+        // 申請をまとめて取得
+        $requests = AttendanceChangeRequest::where('attendance_id', $attendance->id)
+            ->orderByDesc('created_at')
+            ->get()
+            ->groupBy(fn($row) => $row->status->value);
+
+        $pendingRequest = $requests
+            ->get(ApplicationStatus::PENDING->value)
+            ?->first();
+
+        $approvedRequest = $requests
+            ->get(ApplicationStatus::APPROVED->value)
+            ?->first();
+
+        $isPending = (bool) $pendingRequest;
+        $reason = (string) ($approvedRequest->reason ?? '');
+
         if ($isAdminContext) {
             $layout = 'layouts.admin-menu';
-            $reason = '';
-
-            $isPending = AttendanceChangeRequest::existsPending($attendance->id);
-
-            $isApproved = AttendanceChangeRequest::isApprovedByAttendance($attendance->id);
-            if ($isApproved) {
-                $approvedRequest =
-                    AttendanceChangeRequest::where('attendance_id', $attendance->id)->first();
-                $reason = (string)$approvedRequest->reason;
-            }
 
             return view(
                 'attendance.admin.show',
-                compact('layout', 'attendance', 'isPending', 'reason')
+                compact(
+                    'layout',
+                    'attendance',
+                    'isPending',
+                    'reason'
+                )
             );
         } else {
             $layout = 'layouts.user-menu';
-
-            $pendingRequest = null;
-            $approvedRequest = null;
-            $reason = '';
-
-            $isPending = AttendanceChangeRequest::existsPending($attendance->id);
-            if ($isPending) {
-                $pendingRequest =
-                    AttendanceChangeRequest::where('attendance_id', $attendance->id)->first();
-            }
-
-            $isApproved = AttendanceChangeRequest::isApprovedByAttendance($attendance->id);
-            if ($isApproved) {
-                $approvedRequest =
-                    AttendanceChangeRequest::where('attendance_id', $attendance->id)->first();
-                $reason = (string)$approvedRequest->reason;
-            }
 
             $editable = !$isPending;
 
@@ -462,5 +467,90 @@ class AttendanceController extends Controller
                 )
             );
         }
+    }
+
+    /**
+     * 月指定クエリ（month=Y-m）から対象月情報を解決する。
+     *
+     * @param  \Illuminate\Http\Request $request
+     * @return array{
+     *   current:\Carbon\Carbon,
+     *   start:\Carbon\Carbon,
+     *   end:\Carbon\Carbon,
+     *   month:string
+     * }
+     */
+    private function resolveTargetMonth(Request $request): array
+    {
+        $month = $request->query('month'); // "2026-01" or null
+
+        $current = $month
+            ? Carbon::createFromFormat('Y-m', $month)->startOfMonth()
+            : now()->startOfMonth();
+
+        $startOfMonth = $current->copy()->startOfMonth();
+        $endOfMonth   = $current->copy()->endOfMonth();
+
+        return [
+            'current' => $current,                     // 月初(Carbon)
+            'start'   => $startOfMonth,                // 月初(Carbon)
+            'end'     => $endOfMonth,                  // 月末(Carbon)
+            'month'   => $current->format('Y-m'),       // "2026-01"
+        ];
+    }
+    /**
+     * 指定された期間（月内想定）の全日付リストを生成する。
+     *
+     * @param  \Carbon\Carbon $start  期間開始日（通常は月初）
+     * @param  \Carbon\Carbon $end    期間終了日（通常は月末）
+     * @return \Illuminate\Support\Collection<int, array{date:string, label:string}>
+     */
+    private function buildMonthlyDates(Carbon $start, Carbon $end): Collection
+    {
+        return collect(CarbonPeriod::create($start->copy()->startOfMonth(), $end->copy()->endOfMonth()))
+            ->map(fn(Carbon $date) => [
+                'date'  => $date->toDateString(),
+                'label' => $date->translatedFormat('m/d(D)'),
+            ]);
+    }
+
+    /**
+     * 指定ユーザーの対象期間（月内想定）の勤怠を取得し、
+     * work_date（Y-m-d）をキーにしたマップ（連想配列）にして返す。
+     *
+     * @param  int|string $userId 対象ユーザーID
+     * @param  \Carbon\Carbon $start  期間開始日（通常は月初）
+     * @param  \Carbon\Carbon $end    期間終了日（通常は月末）
+     * @return \Illuminate\Support\Collection<string, \App\Models\Attendance>
+     */
+    private function getMonthlyAttendanceMap(int|string $userId, Carbon $start, Carbon $end): Collection
+    {
+        $attendances = Attendance::query()
+            ->where('user_id', $userId)
+            ->whereBetween('work_date', [$start->toDateString(), $end->toDateString()])
+            ->orderBy('work_date')
+            ->get();
+
+        return $attendances->keyBy(
+            fn(Attendance $attendance) => $attendance->work_date->toDateString()
+        );
+    }
+
+    /**
+     * 日付配列に勤怠情報を紐付ける。
+     *
+     * @param  \Illuminate\Support\Collection<int, array{date:string, label:string}>  $dates
+     * @param  \Illuminate\Support\Collection<string, \App\Models\Attendance>         $attendanceMap
+     * @return \Illuminate\Support\Collection<int, array{date:string, label:string, attendance:?Attendance}>
+     */
+    private function attachAttendancesToDates(
+        Collection $dates,
+        Collection $attendanceMap
+    ): Collection {
+        return $dates->map(function (array $date) use ($attendanceMap) {
+            return $date + [
+                'attendance' => $attendanceMap->get($date['date']),
+            ];
+        });
     }
 }

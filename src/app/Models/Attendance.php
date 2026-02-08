@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
 
 class Attendance extends Model
 {
@@ -99,7 +98,7 @@ class Attendance extends Model
         // 指定したユーザーIDと勤務日に合致するレコードが存在するが、clock_in_atとclock_out_atがnullの場合、trueを返す
         return is_null($attendance->clock_in_at) &&
             is_null($attendance->clock_out_at) &&
-            !$attendance->breaks_exists();
+            !$attendance->breaks_exists;
     }
 
     /**

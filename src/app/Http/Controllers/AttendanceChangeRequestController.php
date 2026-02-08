@@ -6,13 +6,24 @@ use App\Models\Attendance;
 use App\Models\AttendanceChangeRequest;
 use App\Http\Requests\AttendanceUpdateRequest;
 use App\Enums\ApplicationStatus;
+use App\Enums\ActionType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
-use App\Enums\ActionType;
 
 class AttendanceChangeRequestController extends Controller
 {
+
+    /**
+     * 一般ユーザーによる勤怠修正申請を登録する。
+     *
+     * @param  AttendanceUpdateRequest $request
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
     public function store(AttendanceUpdateRequest $request)
     {
         $attendance = Attendance::with('breaks')
@@ -27,8 +38,12 @@ class AttendanceChangeRequestController extends Controller
             $attendance->id
         )->with('attendance', 'breaks')->first();
 
+        $hasPending = AttendanceChangeRequest::where('attendance_id', $attendance->id)
+            ->where('status', ApplicationStatus::PENDING)
+            ->exists();
+
         // 既に承認待ちがあるなら更新させない
-        if ($requestItem && $requestItem->status === ApplicationStatus::PENDING) {
+        if ($hasPending) {
             return back()->withErrors([
                 'error' => 'この勤怠は現在承認待ちの申請があるため、修正申請を更新できません。',
             ]);
@@ -50,8 +65,12 @@ class AttendanceChangeRequestController extends Controller
                 'review_comment' => null,
             ];
 
-            $targetRequest = $requestItem ? tap($requestItem)->update($headerData) :
-                AttendanceChangeRequest::create($headerData);
+            if ($requestItem) {
+                $requestItem->update($headerData);
+                $targetRequest = $requestItem;
+            } else {
+                $targetRequest = AttendanceChangeRequest::create($headerData);
+            }
 
             // 出退勤時刻関係のデータ処理
             $clockInAt = $this->toDateTime(
@@ -88,7 +107,7 @@ class AttendanceChangeRequestController extends Controller
             $breakInputs = $request->input('breaks', []);
             $existingBreaks = $attendance->breaks->keyBy('id');
 
-            foreach ($breakInputs as $row) {
+            foreach ($breakInputs as $idx => $row) {
                 $start = $this->toDateTime(
                     $row['start'] ?? null,
                     $attendance->work_date
@@ -99,35 +118,50 @@ class AttendanceChangeRequestController extends Controller
                     $attendance->work_date
                 );
 
-                $hasNone = !$start && !$end;
+                $hasNone = ($start === null) && ($end === null);
 
 
                 // 片方だけ入力は無視
                 // ここに来る時点で「片方だけ入力」は存在しない
                 //（フォームリクエストですでに弾かれている）
-                // 念のためスキップ
-                if (!$start xor !$end) {
-                    continue;
+                // 念のため例外を投げる
+                if ($start === null xor $end === null) {
+                    throw ValidationException::withMessages([
+                        "breaks.$idx.start" => '休憩開始・終了は両方入入力してください。',
+                    ]);
                 }
 
+                $breakId = $row['id'] ?? null;
+
+                $old = null;
+                if ($breakId) {
+                    $old = $existingBreaks->get((int) $breakId);
+                    if (!$old) {
+                        throw ValidationException::withMessages([
+                            "breaks.$idx.start" => '指定された休憩データが見つかりません。',
+                        ]);
+                    }
+                }
+
+                // id が送られてきたのに既存休憩が見つからない場合は不整合
+
                 if ($hasNone) {
-                    if (!empty($row['id'])) {
+
+                    if ($breakId) {
                         $action = ActionType::DELETE;
                     } else {
                         continue; // 新規枠で未入力は何もしない
                     }
                 } else {
                     // 両方入力　→　UPDATE or CREATE
-                    $action = empty($row['id']) ?
-                        ActionType::ADD :
-                        ActionType::UPDATE;
+                    $action = $breakId ?
+                        ActionType::UPDATE :
+                        ActionType::ADD;
                 }
-
-                $old = !empty($row['id']) ? $existingBreaks->get((int)$row['id']) : null;
 
                 $breakData = [
                     'action' => $action,
-                    'target_break_id' => $row['id'] ?? null,
+                    'target_break_id' => $breakId,
                     'new_break_start_at' => $start,
                     'new_break_end_at' => $end,
                     'old_break_start_at' => $old?->break_start_at,
@@ -141,16 +175,29 @@ class AttendanceChangeRequestController extends Controller
             DB::commit();
 
             return redirect()->back();
+        } catch (ValidationException $e) {
+            // DBをロールバック
+            DB::rollback();
+            return back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             // DBをロールバック
             DB::rollback();
             Log::error('DB処理で例外が発生', [
-                'exception' => $e,
+                'exception' => $e->getMessage(),
             ]);
             return back()->withErrors(['error' => '申請の保存に失敗しました。もう一度お試しください。']);
         }
     }
 
+    /**
+     * 勤務日と時刻文字列から Carbon の日時オブジェクトを生成する。
+     *
+     * @param  string|null $time
+     *         "H:i" 形式の時刻文字列（例: "09:00"）。未入力の場合は null
+     * @param  \Carbon\Carbon $workDate
+     *
+     * @return \Carbon\Carbon|null
+     */
     private function toDateTime(?string $time, Carbon $workDate): ?Carbon
     {
         if (!$time) {

@@ -9,7 +9,28 @@
 
 @section('content')
 <div class="attendance-register">
+
     <form action="/attendance" class="attendance-register-form" method="post">
+
+        @if(session('message'))
+        <p class="attendance-success">
+            {{ session('message') }}
+        </p>
+        @endif
+
+        @if($errors->any())
+        <div class="attendance-error-box">
+            {{-- stamp() で入れているキー "error" があれば優先して表示 --}}
+            @if($errors->has('error'))
+            <p class="attendance-error">{{ $errors->first('error') }}</p>
+            @else
+            {{-- それ以外（バリデーションなど）は全部表示 --}}
+            @foreach($errors->all() as $message)
+            <p class="attendance-error">{{ $message }}</p>
+            @endforeach
+            @endif
+        </div>
+        @endif
 
         <div class="attendance-register-status">
             <span class="status-value">
