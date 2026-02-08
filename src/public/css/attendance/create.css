@@ -46,6 +46,10 @@
     font-size: 14px;
 }
 
+.attendance-success {
+    text-align: center;
+}
+
 .attendance-button-clock-in {
     width: 221px;
     height: 77px;

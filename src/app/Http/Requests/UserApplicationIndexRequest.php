@@ -22,10 +22,10 @@ class UserApplicationIndexRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * page パラメータは、申請一覧画面のタブ切り替え用の値を表す。
+     * tab パラメータは、申請一覧画面のタブ切り替え用の値を表す。
      * 本リクエストでは、以下の条件を満たす場合のみ有効とする。
      *
-     * - page が送信されていない場合は検証を行わない（sometimes）
+     * - tab が送信されていない場合は検証を行わない（sometimes）
      * - null または空値は許可する（初期表示用）
      * - 値が存在する場合は文字列であること
      * - ApplicationStatus Enum に定義された name のみを許可する
@@ -37,7 +37,7 @@ class UserApplicationIndexRequest extends FormRequest
     public function rules()
     {
         return [
-            'page' => [
+            'tab' => [
                 'sometimes',
                 'nullable',
                 'string',

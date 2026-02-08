@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Models\AttendanceChangeRequest;
-use App\Enums\ApplicationStatus;
 
 class AttendanceUpdateRequest extends FormRequest
 {
@@ -76,18 +75,6 @@ class AttendanceUpdateRequest extends FormRequest
     /**
      * バリデーションエラー時に表示するカスタムメッセージを定義する。
      *
-     * 各入力項目・各バリデーションルールに対応する
-     * エラーメッセージを日本語で明示的に指定することで、
-     * デフォルトの機械的なメッセージをユーザー向けに分かりやすくする。
-     *
-     * - 必須入力エラー（required）
-     * - 文字数制限エラー（max）
-     * - 時刻形式エラー（date_format:H:i）
-     * - 配列入力（breaks.* / breaks.new）に対するエラー
-     *
-     * 勤怠修正画面における入力ミスを、
-     * どの項目で何が問題なのか直感的に伝えることを目的とする。
-     *
      * @return array<string, string>
      */
     public function messages()
@@ -109,22 +96,6 @@ class AttendanceUpdateRequest extends FormRequest
 
     /**
      * バリデーションルール適用後に、勤怠・休憩時間の整合性を検証する。
-     *
-     * rules() で行う単項目バリデーション（必須・形式チェック）では表現できない、
-     * 以下のような「項目間の関係性」に基づく業務ルールを after バリデーションで検証する。
-     *
-     * 【検証内容】
-     * - 出勤時間 <= 退勤時間 であること
-     * - 休憩開始・終了は両方入力されていること（片方のみは不可）
-     * - 休憩開始 <= 休憩終了 であること
-     * - 休憩時間が 出勤時間〜退勤時間 の範囲内に収まっていること
-     * - 既存休憩（breaks[index]）と新規休憩（breaks.new）の両方に同一ルールを適用
-     *
-     * 本メソッドでは、未入力時（null / 空文字）と入力済み時を明確に判別し、
-     * 未入力データに対して不正な大小比較が行われないよう考慮している。
-     *
-     * また、エラーは対象となる入力項目（breaks.*.start / breaks.*.end 等）に
-     * 紐づけて追加することで、画面上で適切な位置に表示されることを意図している。
      *
      * @param \Illuminate\Validation\Validator $validator
      * @return void
@@ -256,13 +227,6 @@ class AttendanceUpdateRequest extends FormRequest
 
     /**
      * バリデーションエラー時に使用する属性名（表示名）を定義する。
-     *
-     * フォームの入力項目名（clock_in_at, breaks.*.start など）を、
-     * ユーザーに分かりやすい日本語表記へ変換することで、
-     * エラーメッセージの可読性とユーザー体験を向上させる。
-     *
-     * 配列形式で送信される休憩入力（既存休憩・新規休憩）については、
-     * ワイルドカード指定を用いて共通の表示名を割り当てている。
      *
      * @return array<string, string>
      */

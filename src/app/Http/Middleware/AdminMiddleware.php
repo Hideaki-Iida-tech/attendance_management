@@ -10,13 +10,7 @@ class AdminMiddleware
     /**
      * 管理者専用ルートへのアクセスを制御するミドルウェア。
      *
-     * 未認証ユーザーがアクセスした場合はログイン画面へリダイレクトし、
-     * 認証済みであっても管理者権限（isAdmin() === true）を
-     * 持たないユーザーは一般ユーザー用画面へリダイレクトする。
-     *
-     * 管理者権限を持つユーザーのみ、後続のリクエスト処理を許可する。
-     *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Http\Request $request
      * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */

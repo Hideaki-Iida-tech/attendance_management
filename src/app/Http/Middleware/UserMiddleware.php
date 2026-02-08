@@ -10,23 +10,8 @@ class UserMiddleware
     /**
      * 一般ユーザー向けルートへのアクセスを制御するミドルウェア。
      *
-     * 本ミドルウェアは、一般ユーザー専用画面に対して次の判定を行う。
-     *
-     * - 未ログインの場合：
-     *   一般ユーザー用ログイン画面（/login）へリダイレクトする。
-     *
-     * - 管理者としてログイン済みの場合：
-     *   一般ユーザー画面へのアクセスを禁止し、
-     *   管理者用勤怠一覧画面（/admin/attendance/list）へリダイレクトする。
-     *
-     * - 一般ユーザーとしてログイン済みの場合：
-     *   アクセスを許可し、後続の処理へ進む。
-     *
-     * 管理者と一般ユーザーの画面混在を防ぎ、
-     * 誤操作や権限外アクセスを防止することを目的とする。
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
+     * @param  \Illuminate\Http\Request $request
+     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse) $next
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
     public function handle(Request $request, Closure $next)
