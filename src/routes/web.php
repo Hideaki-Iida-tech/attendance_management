@@ -36,11 +36,6 @@ Route::get('/register', function () {
     return view('auth.register');
 });
 
-// メール認証誘導画面表示用ルート
-Route::get('/email/verify', function () {
-    return view('auth.verify-email');
-});
-
 // 管理者用ログイン画面表示ルート
 Route::get('/admin/login', function () {
     return view('auth.admin.login');

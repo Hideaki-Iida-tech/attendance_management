@@ -106,7 +106,7 @@ class AdminAttendanceUpdateRequest extends FormRequest
             }
 
             // 出勤時間が退勤時間より後ろになっている場合
-            // 退勤時間が手巾時間より前になっている場合
+            // 退勤時間が出勤時間より前になっている場合
             $in = $this->input('clock_in_at');
             $out = $this->input('clock_out_at');
 
