@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -30,11 +29,11 @@ class AttendanceStampDateTest extends TestCase
         // 2. 生成したuserについて、メール認証済みにする
         $user->markEmailAsVerified();
 
-        // 1. 勤怠打刻画面を開く
+        // 3. 勤怠打刻画面を開く
         $response = $this->actingAs($user)->get('/attendance');
         $response->assertStatus(200);
 
-        // 2.JSで更新されるタグが表示されていること及び、更新用のJSのコードが出力されていること
+        // 4. JSで更新されるタグが表示されていること及び、更新用のJSのコードが出力されていること
         $response->assertSee('class="date-value"', false);
 
         $response->assertSee('function updateTime()', false); // scriptが含まれること。
