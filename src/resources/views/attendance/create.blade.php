@@ -107,8 +107,8 @@
 
         // 日付（YYYY年MM月DD日）を整形
         const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1);
+        const day = String(now.getDate());
 
         // 曜日を整形
         const weekDays = ['(日)', '(月)', '(火)', '(水)', '(木)', '(金)', '(土)'];
