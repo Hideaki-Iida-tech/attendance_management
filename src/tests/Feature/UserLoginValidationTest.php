@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class UserLoginValidationTest extends TestCase
@@ -56,6 +55,8 @@ class UserLoginValidationTest extends TestCase
 
         // 6. バリデーションエラーが発生することを確認
         $response->assertSessionHasErrors(['email']);
+        $response->assertSessionDoesntHaveErrors(['password']);
+        $response->assertSessionDoesntHaveErrors(['login_context']);
 
         // 7. リダイレクトすることを確認
         $response->assertStatus(302);
@@ -70,7 +71,7 @@ class UserLoginValidationTest extends TestCase
     }
 
     /**
-     * パスワードが未入力の場合にエラーになることをテスト
+     * パスワードが未入力の場合にエラーになることをテスト（一般ユーザー）
      */
     public function test_login_fails_when_password_is_missing()
     {
@@ -107,6 +108,8 @@ class UserLoginValidationTest extends TestCase
 
         // 6. バリデーションエラーが発生することを確認
         $response->assertSessionHasErrors(['password']);
+        $response->assertSessionDoesntHaveErrors(['email']);
+        $response->assertSessionDoesntHaveErrors(['login_context']);
 
         // 7. リダイレクトすることを確認
         $response->assertStatus(302);
@@ -122,7 +125,7 @@ class UserLoginValidationTest extends TestCase
     }
 
     /**
-     * 間違ったメールアドレス、パスワードを入力した場合にエラーになることをテスト
+     * 間違ったメールアドレス、パスワードを入力した場合にエラーになることをテスト（一般ユーザー）
      */
     public function test_login_fails_with_invalid_credentials()
     {
@@ -149,6 +152,7 @@ class UserLoginValidationTest extends TestCase
 
         // 4. 間違った入力情報を入力
         $formData = [
+            'login_context' => 'user',
             'email' => 'test111@example.com',
             'password' => 'password1234',
         ];
@@ -158,6 +162,8 @@ class UserLoginValidationTest extends TestCase
 
         // 6. バリデーションエラーが発生することを確認
         $response->assertSessionHasErrors(['email']);
+        $response->assertSessionDoesntHaveErrors(['password']);
+        $response->assertSessionDoesntHaveErrors(['login_context']);
 
         // 7. リダイレクトすることを確認
         $response->assertStatus(302);
