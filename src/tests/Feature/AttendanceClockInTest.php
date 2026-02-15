@@ -49,7 +49,7 @@ class AttendanceClockInTest extends TestCase
             'attendances',
             [
                 'user_id' => $user->id,
-                'work_date' => today()->toDateString(),
+                'work_date' => Carbon::parse($testTime)->toDateString(),
                 'clock_in_at' => $testTime,
             ]
         );
@@ -113,6 +113,6 @@ class AttendanceClockInTest extends TestCase
 
         // 7. 勤怠一覧画面から出勤の日付、時刻を確認
         $response->assertSee(Carbon::parse($testTime)->translatedFormat('m/d(D)'));
-        $response->assertSee(now()->format('H:i'));
+        $response->assertSee(Carbon::parse($testTime)->format('H:i'));
     }
 }
