@@ -109,7 +109,7 @@ class AttendanceClockInTest extends TestCase
         $response = $this->actingAs($user)->post('/attendance', ['action' => 'clock_in']);
 
         // 6. 勤怠一覧画面を表示
-        $response = $this->actingAs($user)->get('/attendance/list');
+        $response = $this->actingAs($user)->get('/attendance/list/?month=2026-02');
 
         // 7. 勤怠一覧画面から出勤の日付、時刻を確認
         $response->assertSee(Carbon::parse($testTime)->translatedFormat('m/d(D)'));
