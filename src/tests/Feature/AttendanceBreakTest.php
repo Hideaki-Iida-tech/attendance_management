@@ -209,7 +209,7 @@ class AttendanceBreakTest extends TestCase
         $response = $this->actingAs($user)->post('/attendance', ['action' => 'break_end']);
 
         // 10. 勤怠一覧画面を表示
-        $response = $this->actingAs($user)->get('/attendance/list');
+        $response = $this->actingAs($user)->get('/attendance/list/?month=2026-02');
 
         // 11.勤怠一覧画面に休憩の日付及び時間があることを確認
         $response->assertSee(Carbon::parse($clockInTime)->translatedFormat('m/d(D)'));
@@ -220,7 +220,6 @@ class AttendanceBreakTest extends TestCase
         $minutes = $start->diffInMinutes($end);
 
         $expected = sprintf('%d:%02d', intdiv($minutes, 60), $minutes % 60);
-        dump($expected);
         $response->assertSee($expected);
     }
 }
