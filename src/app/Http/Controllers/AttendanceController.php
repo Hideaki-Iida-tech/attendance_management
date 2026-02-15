@@ -15,9 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Collection;
 use Illuminate\Database\QueryException;
-use Exception;
 use RuntimeException;
-use Symfony\Component\Console\Exception\RuntimeException as ExceptionRuntimeException;
 
 class AttendanceController extends Controller
 {
