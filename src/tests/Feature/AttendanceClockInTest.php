@@ -91,6 +91,7 @@ class AttendanceClockInTest extends TestCase
     public function test_clock_in_time_is_displayed_on_attendance_index()
     {
         // 1. 時刻固定
+        Carbon::setLocale('ja');
         $testTime = '2026-02-15 09:00:00';
         Carbon::setTestNow($testTime);
 
@@ -111,7 +112,7 @@ class AttendanceClockInTest extends TestCase
         $response = $this->actingAs($user)->get('/attendance/list');
 
         // 7. 勤怠一覧画面から出勤の日付、時刻を確認
-        $response->assertSee(today()->translatedFormat('m/d(D)'));
+        $response->assertSee(Carbon::parse($testTime)->translatedFormat('m/d(D)'));
         $response->assertSee(now()->format('H:i'));
     }
 }
