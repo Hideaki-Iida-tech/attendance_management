@@ -77,20 +77,33 @@ class AttendanceClockOutTest extends TestCase
         // 4. 勤怠打刻画面を開く
         $response = $this->actingAs($user)->get('/attendance');
 
-        // 5. 出勤処理を行う
+        // 5. 「出勤」ボタンが表示されていることを確認
+        $response->assertSee('<button class="attendance-button-clock-in" name="action" value="clock_in">
+                出勤
+            </button>', false);
+
+        // 6. 出勤処理を行う
         $response = $this->actingAs($user)->post('/attendance', ['action' => 'clock_in']);
 
-        // 6. 退勤時刻を設定
+        // 7. 退勤時刻を設定
         $clockOutTime = '2026-02-15 17:00:00';
         Carbon::setTestNow($clockOutTime);
 
-        // 7. 退勤処理を行う
+        // 8. 勤怠打刻画面を開く
+        $response = $this->actingAs($user)->get('/attendance');
+
+        // 9. 「退勤」ボタンが表示されていることを確認
+        $response->assertSee('<button class="attendance-button-clock-out" name="action" value="clock_out">
+                退勤
+            </button>', false);
+
+        // 10. 退勤処理を行う
         $response = $this->actingAs($user)->post('/attendance', ['action' => 'clock_out']);
 
-        // 8. 勤怠一覧画面を表示
+        // 11. 勤怠一覧画面を表示
         $response = $this->actingAs($user)->get('/attendance/list/?month=2026-02');
 
-        // 9. 勤怠一覧画面から退勤の日付、時刻を確認
+        // 12. 勤怠一覧画面から退勤の日付、時刻を確認
         $response->assertSee(Carbon::parse($clockOutTime)->translatedFormat('m/d(D)'));
         $response->assertSee(Carbon::parse($clockOutTime)->format('H:i'));
     }
