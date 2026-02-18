@@ -77,16 +77,29 @@ class AttendanceBreakTest extends TestCase
         // 5. 勤怠打刻画面を開く
         $response = $this->actingAs($user)->get('/attendance');
 
-        // 6. 休憩開始処理を行う
+        // 6. 「休憩入」ボタンが表示されていることを確認
+        $response->assertSee('<button class="attendance-button-break-start" name="action" value="break_start">
+                休憩入
+            </button>', false);
+
+        // 7. 休憩開始処理を行う
         $this->actingAs($user)->post('/attendance', ['action' => 'break_start']);
 
-        // 7. 休憩終了処理を行う
-        $this->actingAs($user)->post('/attendance', ['action' => 'break_end']);
-
-        // 8. 勤怠打刻画面を再表示
+        // 8. 勤怠打刻画面を開く
         $response = $this->actingAs($user)->get('/attendance');
 
-        // 9. 「休憩入」ボタンが表示されていることを確認
+        // 9. 「休憩戻」ボタンが表示されていることを確認
+        $response->assertSee('<button class="attendance-button-break-end" name="action" value="break_end">
+                休憩戻
+            </button>', false);
+
+        // 10. 休憩終了処理を行う
+        $this->actingAs($user)->post('/attendance', ['action' => 'break_end']);
+
+        // 11. 勤怠打刻画面を再表示
+        $response = $this->actingAs($user)->get('/attendance');
+
+        // 12. 「休憩入」ボタンが表示されていることを確認
         $response->assertSee('<button class="attendance-button-break-start" name="action" value="break_start">
                 休憩入
             </button>', false);
@@ -113,21 +126,26 @@ class AttendanceBreakTest extends TestCase
         // 5. 勤怠打刻画面を開く
         $response = $this->actingAs($user)->get('/attendance');
 
-        // 6. 休憩開始処理を行う
+        // 6. 「休憩入」ボタンが表示されていることを確認
+        $response->assertSee('<button class="attendance-button-break-start" name="action" value="break_start">
+                休憩入
+            </button>', false);
+
+        // 7. 休憩開始処理を行う
         $response = $this->actingAs($user)->post('/attendance', ['action' => 'break_start']);
 
-        // 7. 勤怠打刻画面を再表示
+        // 8. 勤怠打刻画面を再表示
         $response = $this->actingAs($user)->get('/attendance');
 
-        // 8. 「休憩戻」ボタンが表示されていることを確認
+        // 9. 「休憩戻」ボタンが表示されていることを確認
         $response->assertSee('<button class="attendance-button-break-end" name="action" value="break_end">
                 休憩戻
             </button>', false);
 
-        // 9. 休憩終了処理を行う
+        // 10. 休憩終了処理を行う
         $response = $this->actingAs($user)->post('/attendance', ['action' => 'break_end']);
 
-        // 10. DBに登録されていることを確認
+        // 11. DBに登録されていることを確認
         $this->assertDatabaseHas(
             'breaks',
             ['break_end_at' => $testTime]
@@ -155,19 +173,40 @@ class AttendanceBreakTest extends TestCase
         // 5. 勤怠打刻画面を開く
         $response = $this->actingAs($user)->get('/attendance');
 
-        // 6. 休憩開始処理を行う
+        // 6. 「休憩入」ボタンが表示されていることを確認
+        $response->assertSee('<button class="attendance-button-break-start" name="action" value="break_start">
+                休憩入
+            </button>', false);
+
+        // 7. 休憩開始処理を行う
         $response = $this->actingAs($user)->post('/attendance', ['action' => 'break_start']);
 
-        // 7. 休憩終了処理を行う
-        $response = $this->actingAs($user)->post('/attendance', ['action' => 'break_end']);
-
-        // 8. 再度休憩開始処理を行う
-        $response = $this->actingAs($user)->post('/attendance', ['action' => 'break_start']);
-
-        // 9. 勤怠打刻画面を再表示
+        // 8. 勤怠打刻画面を開く
         $response = $this->actingAs($user)->get('/attendance');
 
-        // 10. 「休憩戻」ボタンが表示されていることを確認
+        // 9. 「休憩戻」ボタンが表示されていることを確認
+        $response->assertSee('<button class="attendance-button-break-end" name="action" value="break_end">
+                休憩戻
+            </button>', false);
+
+        // 10. 休憩終了処理を行う
+        $response = $this->actingAs($user)->post('/attendance', ['action' => 'break_end']);
+
+        // 11. 勤怠打刻画面を開く
+        $response = $this->actingAs($user)->get('/attendance');
+
+        // 12. 「休憩入」ボタンが表示されていることを確認
+        $response->assertSee('<button class="attendance-button-break-start" name="action" value="break_start">
+                休憩入
+            </button>', false);
+
+        // 13. 再度休憩開始処理を行う
+        $response = $this->actingAs($user)->post('/attendance', ['action' => 'break_start']);
+
+        // 14. 勤怠打刻画面を再表示
+        $response = $this->actingAs($user)->get('/attendance');
+
+        // 15. 「休憩戻」ボタンが表示されていることを確認
         $response->assertSee('<button class="attendance-button-break-end" name="action" value="break_end">
                 休憩戻
             </button>', false);
@@ -198,20 +237,33 @@ class AttendanceBreakTest extends TestCase
         // 6. 勤怠打刻画面を開く
         $response = $this->actingAs($user)->get('/attendance');
 
-        // 7. 休憩開始処理を行う
+        // 7. 「休憩入」ボタンが表示されていることを確認
+        $response->assertSee('<button class="attendance-button-break-start" name="action" value="break_start">
+                休憩入
+            </button>', false);
+
+        // 8. 休憩開始処理を行う
         $response = $this->actingAs($user)->post('/attendance', ['action' => 'break_start']);
 
-        // 8. 休憩終了時刻設定
+        // 9. 休憩終了時刻設定
         $breakEndTime = '2026-02-15 10:30:00';
         Carbon::setTestNow($breakEndTime);
 
-        // 9. 休憩終了処理を行う
+        // 10. 勤怠打刻画面を開く
+        $response = $this->actingAs($user)->get('/attendance');
+
+        // 11. 「休憩戻」ボタンが表示されていることを確認
+        $response->assertSee('<button class="attendance-button-break-end" name="action" value="break_end">
+                休憩戻
+            </button>', false);
+
+        // 12. 休憩終了処理を行う
         $response = $this->actingAs($user)->post('/attendance', ['action' => 'break_end']);
 
-        // 10. 勤怠一覧画面を表示
+        // 13. 勤怠一覧画面を表示
         $response = $this->actingAs($user)->get('/attendance/list/?month=2026-02');
 
-        // 11.勤怠一覧画面に休憩の日付及び時間があることを確認
+        // 14.勤怠一覧画面に休憩の日付及び時間があることを確認
         $response->assertSee(Carbon::parse($clockInTime)->translatedFormat('m/d(D)'));
 
         $start = Carbon::parse($breakStartTime);
