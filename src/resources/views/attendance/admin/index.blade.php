@@ -11,7 +11,7 @@
 
 <div class="attendance-list">
     <div class="attendance-list-title">
-        <h1 class="attendance-list-title-inner">{{ $titleYearMonthDay }}の勤怠一覧</h1>
+        <h1 class="attendance-list-title-inner">{{ $titleYearMonthDay }}の勤怠</h1>
     </div>
     <div class="present-month-selector">
         <p><a href="/admin/attendance/list/?day={{ $preDay }}" class="month-pre">←前日</a></p>
