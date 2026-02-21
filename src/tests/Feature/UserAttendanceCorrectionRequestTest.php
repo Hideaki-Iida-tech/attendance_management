@@ -60,20 +60,23 @@ class UserAttendanceCorrectionRequestTest extends TestCase
             'reason' => 'test',
         ];
 
-        // 7. 「修正」ボタンを押す
+        // 7. 「修正」ボタンが表示されていることを確認
+        $response->assertSee('<button type="submit" name="submit" class="modify-button">修正</button>', false);
+
+        // 8. 「修正」ボタンを押す
         $response = $this->actingAs($user)->post('/attendance/' . $attendance->id, $formData);
 
-        // 8. バリデーションエラーが発生することを確認
+        // 9. バリデーションエラーが発生することを確認
         $response->assertSessionHasErrors(['clock_out_at']);
         $response->assertSessionDoesntHaveErrors(['clock_in_at']);
         $response->assertSessionDoesntHaveErrors(['work_date']);
         $response->assertSessionDoesntHaveErrors(['reason']);
 
-        // 7. リダイレクトすることを確認
+        // 10. リダイレクトすることを確認
         $response->assertStatus(302);
         $response->assertRedirect('/attendance/' . $attendance->id);
 
-        // 8. エラーメッセージがセッションに入っているか確認
+        // 11. エラーメッセージがセッションに入っているか確認
         $this->assertTrue(session()->has('errors'));
         $this->assertEquals(
             session('errors')->first('clock_out_at'),
@@ -158,21 +161,24 @@ class UserAttendanceCorrectionRequestTest extends TestCase
             'reason' => 'test',
         ];
 
-        // 8. 「修正」ボタンを押す
+        // 8. 「修正」ボタンが表示されていることを確認
+        $response->assertSee('<button type="submit" name="submit" class="modify-button">修正</button>', false);
+
+        // 9. 「修正」ボタンを押す
         $response = $this->actingAs($user)->post('/attendance/' . $attendance->id, $formData);
 
-        // 9. バリデーションエラーが発生することを確認
+        // 10. バリデーションエラーが発生することを確認
         $response->assertSessionHasErrors(['breaks.2.start']);
         $response->assertSessionDoesntHaveErrors(['work_date']);
         $response->assertSessionDoesntHaveErrors(['clock_out_at']);
         $response->assertSessionDoesntHaveErrors(['clock_in_at']);
         $response->assertSessionDoesntHaveErrors(['reason']);
 
-        // 10. リダイレクトすることを確認
+        // 11. リダイレクトすることを確認
         $response->assertStatus(302);
         $response->assertRedirect('/attendance/' . $attendance->id);
 
-        // 11. エラーメッセージがセッションに入っているか確認
+        // 12. エラーメッセージがセッションに入っているか確認
         $this->assertTrue(session()->has('errors'));
         $this->assertEquals(
             session('errors')->first('breaks.2.start'),
@@ -255,22 +261,24 @@ class UserAttendanceCorrectionRequestTest extends TestCase
             ],
             'reason' => 'test',
         ];
+        // 8. 「修正」ボタンが表示されていることを確認
+        $response->assertSee('<button type="submit" name="submit" class="modify-button">修正</button>', false);
 
-        // 8. 「修正」ボタンを押す
+        // 9. 「修正」ボタンを押す
         $response = $this->actingAs($user)->post('/attendance/' . $attendance->id, $formData);
 
-        // 9. バリデーションエラーが発生することを確認
+        // 10. バリデーションエラーが発生することを確認
         $response->assertSessionHasErrors(['clock_out_at']);
         $response->assertSessionHasErrors(['breaks.2.end']);
         $response->assertSessionDoesntHaveErrors(['work_date']);
         $response->assertSessionDoesntHaveErrors(['clock_in_at']);
         $response->assertSessionDoesntHaveErrors(['reason']);
 
-        // 10. リダイレクトすることを確認
+        // 11. リダイレクトすることを確認
         $response->assertStatus(302);
         $response->assertRedirect('/attendance/' . $attendance->id);
 
-        // 11. エラーメッセージがセッションに入っているか確認
+        // 12. エラーメッセージがセッションに入っているか確認
         $this->assertTrue(session()->has('errors'));
         $this->assertEquals(
             session('errors')->first('clock_out_at'),
@@ -321,20 +329,23 @@ class UserAttendanceCorrectionRequestTest extends TestCase
             'reason' => '',
         ];
 
-        // 7. 「修正」ボタンを押す
+        // 7. 「修正」ボタンが表示されていることを確認
+        $response->assertSee('<button type="submit" name="submit" class="modify-button">修正</button>', false);
+
+        // 8. 「修正」ボタンを押す
         $response = $this->actingAs($user)->post('/attendance/' . $attendance->id, $formData);
 
-        // 8. バリデーションエラーが発生することを確認
+        // 9. バリデーションエラーが発生することを確認
         $response->assertSessionHasErrors(['reason']);
         $response->assertSessionDoesntHaveErrors(['clock_out_at']);
         $response->assertSessionDoesntHaveErrors(['clock_in_at']);
         $response->assertSessionDoesntHaveErrors(['work_date']);
 
-        // 7. リダイレクトすることを確認
+        // 10. リダイレクトすることを確認
         $response->assertStatus(302);
         $response->assertRedirect('/attendance/' . $attendance->id);
 
-        // 8. エラーメッセージがセッションに入っているか確認
+        // 11. エラーメッセージがセッションに入っているか確認
         $this->assertTrue(session()->has('errors'));
         $this->assertEquals(
             session('errors')->first('reason'),
@@ -421,28 +432,31 @@ class UserAttendanceCorrectionRequestTest extends TestCase
             'reason' => 'test',
         ];
 
-        // 9. 「修正」ボタンを押す
+        // 9. 「修正」ボタンが表示されていることを確認
+        $response->assertSee('<button type="submit" name="submit" class="modify-button">修正</button>', false);
+
+        // 10. 「修正」ボタンを押す
         $response = $this->actingAs($user)
             ->post('/attendance/' . $attendance->id, $formData);
 
-        // 10. 作成した申請レコードを取得
+        // 11. 作成した申請レコードを取得
         $requestRecord = AttendanceChangeRequest::with('attendance', 'breaks')
             ->where('attendance_id', $attendance->id)
             ->latest('updated_at')
             ->first();
 
-        // 11. 一般ユーザーからログアウト
+        // 12. 一般ユーザーからログアウト
         $logoutResponse = $this->post('/logout');
 
-        // 12. ログインする管理者ユーザーのインスタンスを生成
+        // 13. ログインする管理者ユーザーのインスタンスを生成
         $adminUser = User::where('email', 'admin@example.com')
             ->first();
 
-        // 13. 修正申請承認画面（管理者）を開く
+        // 14. 修正申請承認画面（管理者）を開く
         $response = $this->actingAs($adminUser)
             ->get('/stamp_correction_request/approve/' . $requestRecord->id);
 
-        // 14. 修正申請承認画面の表示を確認
+        // 15. 修正申請承認画面の表示を確認
         $response->assertSee($guestUserName);
         $response->assertSee($requestRecord->work_date->format('Y年'));
         $response->assertSee($requestRecord->work_date->format('n月j日'));
@@ -453,10 +467,10 @@ class UserAttendanceCorrectionRequestTest extends TestCase
             $response->assertSee($break->new_break_end_at->format('H:i'));
         }
 
-        // 15. 申請一覧画面（管理者）を開く
+        // 16. 申請一覧画面（管理者）を開く
         $response = $this->actingAs($adminUser)->get('/stamp_correction_request/list');
 
-        // 16. 申請一覧画面の表示を確認
+        // 17. 申請一覧画面の表示を確認
         $response->assertSee('承認待ち');
         $response->assertSee($guestUserName);
         $response->assertSee($requestRecord->work_date->format('Y/m/d'));
@@ -546,11 +560,14 @@ class UserAttendanceCorrectionRequestTest extends TestCase
             'reason' => 'test1',
         ];
 
-        // 1-9. 「修正」ボタンを押す（ログインユーザーの1件目）
+        // 1-9. 「修正」ボタンが表示されていることを確認
+        $response->assertSee('<button type="submit" name="submit" class="modify-button">修正</button>', false);
+
+        // 1-10. 「修正」ボタンを押す（ログインユーザーの1件目）
         $response = $this->actingAs($user)
             ->post('/attendance/' . $attendance[0]->id, $formData);
 
-        // 1-10. 作成した申請レコードを取得（ログインユーザーの1件目）
+        // 1-11. 作成した申請レコードを取得（ログインユーザーの1件目）
         $requestRecord[] = AttendanceChangeRequest::with('attendance', 'breaks')
             ->where('attendance_id', $attendance[0]->id)
             ->latest('updated_at')
@@ -623,11 +640,14 @@ class UserAttendanceCorrectionRequestTest extends TestCase
             'reason' => 'test2',
         ];
 
-        // 2-6. 「修正」ボタンを押す（ログインユーザーの2件目）
+        // 2-6. 「修正」ボタンが表示されていることを確認
+        $response->assertSee('<button type="submit" name="submit" class="modify-button">修正</button>', false);
+
+        // 2-7. 「修正」ボタンを押す（ログインユーザーの2件目）
         $response = $this->actingAs($user)
             ->post('/attendance/' . $attendance[1]->id, $formData);
 
-        // 2-7. 作成した申請レコードを取得（ログインユーザーの2件目）
+        // 2-8. 作成した申請レコードを取得（ログインユーザーの2件目）
         $requestRecord[] = AttendanceChangeRequest::with('attendance', 'breaks')
             ->where('attendance_id', $attendance[1]->id)
             ->latest('updated_at')
@@ -710,11 +730,14 @@ class UserAttendanceCorrectionRequestTest extends TestCase
             'reason' => 'test3',
         ];
 
-        // 3-9. 「修正」ボタンを押す（非ログインユーザー用）
+        // 3-9. 「修正」ボタンが表示されていることを確認
+        $response->assertSee('<button type="submit" name="submit" class="modify-button">修正</button>', false);
+
+        // 3-10. 「修正」ボタンを押す（非ログインユーザー用）
         $response = $this->actingAs($otherUser)
             ->post('/attendance/' . $attendance[2]->id, $formData);
 
-        // 3-10. 作成した申請レコードを取得（非ログインユーザー用）
+        // 3-11. 作成した申請レコードを取得（非ログインユーザー用）
         $requestRecord[] = AttendanceChangeRequest::with('attendance', 'breaks')
             ->where('attendance_id', $attendance[2]->id)
             ->latest('updated_at')
@@ -787,16 +810,19 @@ class UserAttendanceCorrectionRequestTest extends TestCase
             'reason' => 'test4',
         ];
 
-        // 4-6. 「修正」ボタンを押す（ログインユーザーの3件目/承認済み用）
+        // 4-6. 「修正」ボタンが表示されていることを確認（ログインユーザーの3件目/承認済み用）
+        $response->assertSee('<button type="submit" name="submit" class="modify-button">修正</button>', false);
+
+        // 4-7. 「修正」ボタンを押す（ログインユーザーの3件目/承認済み用）
         $response = $this->actingAs($user)
             ->post('/attendance/' . $attendance[3]->id, $formData);
 
-        // 4-7. 作成した申請レコードを取得（ログインユーザーの3件目/承認済み用）
+        // 4-8. 作成した申請レコードを取得（ログインユーザーの3件目/承認済み用）
         $requestRecord[] = AttendanceChangeRequest::with('attendance', 'breaks')
             ->where('attendance_id', $attendance[3]->id)
             ->latest('updated_at')->first();
 
-        // 4-8. 承認処理
+        // 4-9. 承認処理
         $adminUser = User::where('email', 'admin@example.com')
             ->first();
         $response = $this->actingAs($adminUser)
@@ -940,17 +966,20 @@ class UserAttendanceCorrectionRequestTest extends TestCase
             'reason' => 'test1',
         ];
 
-        // 1-9. 「修正」ボタンを押す（ログインユーザーの1件目）
+        // 1-9. 「修正」ボタンが表示されていることを確認（ログインユーザーの1件目）
+        $response->assertSee('<button type="submit" name="submit" class="modify-button">修正</button>', false);
+
+        // 1-10. 「修正」ボタンを押す（ログインユーザーの1件目）
         $response = $this->actingAs($user)
             ->post('/attendance/' . $attendance[0]->id, $formData);
 
-        // 1-10. 作成した申請レコードを取得（ログインユーザーの1件目）
+        // 1-11. 作成した申請レコードを取得（ログインユーザーの1件目）
         $requestRecord[] = AttendanceChangeRequest::with('attendance', 'breaks')
             ->where('attendance_id', $attendance[0]->id)
             ->latest('updated_at')
             ->first();
 
-        // 1-11. 承認処理（ログインユーザーの1件目）
+        // 1-12. 承認処理（ログインユーザーの1件目）
         $adminUser = User::where('email', 'admin@example.com')
             ->first();
         $response = $this->actingAs($adminUser)
@@ -1023,17 +1052,20 @@ class UserAttendanceCorrectionRequestTest extends TestCase
             'reason' => 'test2',
         ];
 
-        // 2-6. 「修正」ボタンを押す（ログインユーザーの2件目）
+        // 2-6. 「修正」ボタンが表示されていることを確認（ログインユーザーの2件目）
+        $response->assertSee('<button type="submit" name="submit" class="modify-button">修正</button>', false);
+
+        // 2-7. 「修正」ボタンを押す（ログインユーザーの2件目）
         $response = $this->actingAs($user)
             ->post('/attendance/' . $attendance[1]->id, $formData);
 
-        // 2-7. 作成した申請レコードを取得（ログインユーザーの2件目）
+        // 2-8. 作成した申請レコードを取得（ログインユーザーの2件目）
         $requestRecord[] = AttendanceChangeRequest::with('attendance', 'breaks')
             ->where('attendance_id', $attendance[1]->id)
             ->latest('updated_at')
             ->first();
 
-        // 2-8. 承認処理（ログインユーザーの2件目）
+        // 2-9. 承認処理（ログインユーザーの2件目）
         $response = $this->actingAs($adminUser)
             ->post('/stamp_correction_request/approve/' . $requestRecord[1]->id);
 
@@ -1114,17 +1146,20 @@ class UserAttendanceCorrectionRequestTest extends TestCase
             'reason' => 'test3',
         ];
 
-        // 3-9. 「修正」ボタンを押す（非ログインユーザー用）
+        // 3-9. 「修正」ボタンが表示されていることを確認（非ログインユーザー用）
+        $response->assertSee('<button type="submit" name="submit" class="modify-button">修正</button>', false);
+
+        // 3-10. 「修正」ボタンを押す（非ログインユーザー用）
         $response = $this->actingAs($otherUser)
             ->post('/attendance/' . $attendance[2]->id, $formData);
 
-        // 3-10. 作成した申請レコードを取得（非ログインユーザー用）
+        // 3-11. 作成した申請レコードを取得（非ログインユーザー用）
         $requestRecord[] = AttendanceChangeRequest::with('attendance', 'breaks')
             ->where('attendance_id', $attendance[2]->id)
             ->latest('updated_at')
             ->first();
 
-        // 3-11. 承認処理（非ログインユーザーの申請について）
+        // 3-12. 承認処理（非ログインユーザーの申請について）
         $response = $this->actingAs($adminUser)
             ->post('/stamp_correction_request/approve/' . $requestRecord[2]->id);
 
@@ -1195,11 +1230,14 @@ class UserAttendanceCorrectionRequestTest extends TestCase
             'reason' => 'test4',
         ];
 
-        // 4-6. 「修正」ボタンを押す（ログインユーザーの3件目/承認待ち）
+        // 4-6. 「修正」ボタンが表示されていることを確認（ログインユーザーの3件目/承認待ち）
+        $response->assertSee('<button type="submit" name="submit" class="modify-button">修正</button>', false);
+
+        // 4-7. 「修正」ボタンを押す（ログインユーザーの3件目/承認待ち）
         $response = $this->actingAs($user)
             ->post('/attendance/' . $attendance[3]->id, $formData);
 
-        // 4-7. 作成した申請レコードを取得（ログインユーザーの3件目/承認待ち）
+        // 4-8. 作成した申請レコードを取得（ログインユーザーの3件目/承認待ち）
         $requestRecord[] = AttendanceChangeRequest::with('attendance', 'breaks')
             ->where('attendance_id', $attendance[3]->id)
             ->latest('updated_at')->first();
@@ -1342,11 +1380,14 @@ class UserAttendanceCorrectionRequestTest extends TestCase
             'reason' => 'test1',
         ];
 
-        // 1-9. 「修正」ボタンを押す（ログインユーザーの1件目）
+        // 1-9. 「修正」ボタンが表示されていることを確認（ログインユーザーの1件目）
+        $response->assertSee('<button type="submit" name="submit" class="modify-button">修正</button>', false);
+
+        // 1-10. 「修正」ボタンを押す（ログインユーザーの1件目）
         $response = $this->actingAs($user)
             ->post('/attendance/' . $attendance->id, $formData);
 
-        // 1-10. 作成した申請レコードを取得（ログインユーザーの1件目）
+        // 1-11. 作成した申請レコードを取得（ログインユーザーの1件目）
         $requestRecord = AttendanceChangeRequest::with('attendance', 'breaks')
             ->where('attendance_id', $attendance->id)
             ->latest('updated_at')
