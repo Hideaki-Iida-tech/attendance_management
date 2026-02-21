@@ -38,7 +38,7 @@ class AdminAttendanceController extends Controller
             : now();
 
         $yearMonthDay = $current->format('Y/m/d');
-        $titleYearMonthDay = $current->format('Y年m月d日');
+        $titleYearMonthDay = $current->format('Y年n月j日');
 
         $preDay = $current->copy()->subDay()->format('Y-m-d');
         $nextDay = $current->copy()->addDay()->format('Y-m-d');

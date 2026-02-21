@@ -240,7 +240,7 @@ class AttendanceIndexTest extends TestCase
         $nextClockInTime = '2026-03-15 09:01:00';
         $nextClockOutTime = '2026-03-15 17:01:00';
 
-        // 6. 前月の出退勤時刻をDBに保存
+        // 6. 翌月の出退勤時刻をDBに保存
         $nextData = [
             'user_id' => $user->id,
             'work_date' => Carbon::parse($nextTime)->toDateString(),
@@ -255,16 +255,16 @@ class AttendanceIndexTest extends TestCase
         // 8. 勤怠一覧画面に前月のリンクが存在することを確認
         $response->assertSee('<a href="/attendance/list?month=2026-03" class="month-next">次月→</a>', false);
 
-        // 8. 前月の勤怠一覧を表示
+        // 8. 翌月の勤怠一覧を表示
         $response = $this->actingAs($user)->get('/attendance/list/?month=2026-03');
 
-        // 9. 前月の勤怠一覧に今月の勤怠情報が表示されていないことを確認
+        // 9. 翌月の勤怠一覧に今月の勤怠情報が表示されていないことを確認
         $response->assertDontSee(Carbon::parse($presentClockInTime)->format('Y/m'));
         $response->assertDontSee(Carbon::parse($presentClockInTime)->translatedFormat('m/d(D)'));
         $response->assertDontSee(Carbon::parse($presentClockInTime)->format('H:i'));
         $response->assertDontSee(Carbon::parse($presentClockOutTime)->format('H:i'));
 
-        // 9. 前月の勤怠一覧に前月の勤怠情報が表示されていることを確認
+        // 9. 翌月の勤怠一覧に翌月の勤怠情報が表示されていることを確認
         $response->assertSee(Carbon::parse($nextClockInTime)->format('Y/m'));
         $response->assertSee(Carbon::parse($nextClockInTime)->translatedFormat('m/d(D)'));
         $response->assertSee(Carbon::parse($nextClockInTime)->format('H:i'));
