@@ -102,13 +102,20 @@ class AttendanceIndexTest extends TestCase
             $response->assertSee(Carbon::parse($clockInTime)->format('H:i'));
             $response->assertSee(Carbon::parse($testClockOutTime[$idx])->format('H:i'));
 
-            $start = Carbon::parse($testBreakStartTime[$idx]);
-            $end   = Carbon::parse($testBreakEndTime[$idx]);
+            $breakStart = Carbon::parse($testBreakStartTime[$idx]);
+            $breakEnd   = Carbon::parse($testBreakEndTime[$idx]);
+            $workingStart = Carbon::parse($clockInTime);
+            $workingEnd = Carbon::parse($testClockOutTime[$idx]);
 
-            $minutes = $start->diffInMinutes($end);
+            $breakMinutes = $breakStart->diffInMinutes($breakEnd);
+            $workingMinutes = $workingStart->diffInMinutes($workingEnd);
 
-            $expected = sprintf('%d:%02d', intdiv($minutes, 60), $minutes % 60);
-            $response->assertSee($expected);
+            $workingMinutes = $workingMinutes - $breakMinutes;
+
+            $breakExpected = sprintf('%d:%02d', intdiv($breakMinutes, 60), $breakMinutes % 60);
+            $workingExpected = sprintf('%d:%02d', intdiv($workingMinutes, 60), $workingMinutes % 60);
+            $response->assertSee($breakExpected);
+            $response->assertSee($workingExpected);
         }
 
         // 13. 他のユーザーのテストケースが一覧画面に表示されていないことを確認
@@ -116,13 +123,21 @@ class AttendanceIndexTest extends TestCase
         $response->assertDontSee(Carbon::parse($anotherClockInTime)->format('H:i'));
         $response->assertDontSee(Carbon::parse($anotherClockOutTime)->format('H:i'));
 
-        $start = Carbon::parse($anotherBreakStartTime);
-        $end   = Carbon::parse($anotherBreakEndTime);
+        $breakStart = Carbon::parse($anotherBreakStartTime);
+        $breakEnd   = Carbon::parse($anotherBreakEndTime);
+        $workingStart = Carbon::parse($anotherClockInTime);
+        $workingEnd = Carbon::parse($anotherClockOutTime);
 
-        $minutes = $start->diffInMinutes($end);
+        $breakMinutes = $breakStart->diffInMinutes($breakEnd);
+        $workingMinute = $workingStart->diffInMinutes($workingEnd);
 
-        $expected = sprintf('%d:%02d', intdiv($minutes, 60), $minutes % 60);
-        $response->assertDontSee($expected);
+        $workingMinutes = $workingMinutes - $breakMinutes;
+
+        $breakExpected = sprintf('%d:%02d', intdiv($breakMinutes, 60), $breakMinutes % 60);
+        $workingExpected = sprintf('%d:%02d', intdiv($workingMinutes, 60), $workingMinutes % 60);
+
+        $response->assertDontSee($breakExpected);
+        $response->assertDontSee($workingExpected);
     }
 
     /**
@@ -160,7 +175,7 @@ class AttendanceIndexTest extends TestCase
         Carbon::setLocale('ja');
         Carbon::setTestNow($testTime);
 
-        // 4. テスト月の出退勤時刻をDBに保存
+        // 4-1. テスト月の出退勤時刻をDBに保存
         $presentClockInTime = '2026-02-15 09:00:00';
         $presentClockOutTime = '2026-02-15 17:00:00';
         $presentData = [
@@ -169,21 +184,35 @@ class AttendanceIndexTest extends TestCase
             'clock_in_at' => Carbon::parse($presentClockInTime),
             'clock_out_at' => Carbon::parse($presentClockOutTime),
         ];
-        Attendance::create($presentData);
+        $presentAttendance = Attendance::create($presentData);
+
+        // 4-2. テスト月の休憩情報をDBに保存
+        $presentBreakData = [
+            'break_start_at' => '2026-02-15 10:00:00',
+            'break_end_at' => '2026-02-15 10:15:00',
+        ];
+        $presentAttendance->breaks()->create($presentBreakData);
 
         // 5. 前月の日時を設定
         $previousTime = '2026-01-15 09:00:00';
         $previousClockInTime = '2026-01-15 09:01:00';
         $previousClockOutTime = '2026-01-15 17:01:00';
 
-        // 6. 前月の出退勤時刻をDBに保存
+        // 6-1. 前月の出退勤時刻をDBに保存
         $previousData = [
             'user_id' => $user->id,
             'work_date' => Carbon::parse($previousTime)->toDateString(),
             'clock_in_at' => Carbon::parse($previousClockInTime),
             'clock_out_at' => Carbon::parse($previousClockOutTime),
         ];
-        Attendance::create($previousData);
+        $previousAttendance = Attendance::create($previousData);
+
+        // 6-2. 前月の休憩情報をDBに保存
+        $previousBreakData = [
+            'break_start_at' => '2026-01-15 10:00:00',
+            'break_end_at' => '2026-01-15 10:16:00',
+        ];
+        $previousAttendance->breaks()->create($previousBreakData);
 
         // 7. 勤怠一覧画面を表示
         $response = $this->actingAs($user)->get('/attendance/list/?month=2026-02');
@@ -199,12 +228,16 @@ class AttendanceIndexTest extends TestCase
         $response->assertDontSee(Carbon::parse($presentClockInTime)->translatedFormat('m/d(D)'));
         $response->assertDontSee(Carbon::parse($presentClockInTime)->format('H:i'));
         $response->assertDontSee(Carbon::parse($presentClockOutTime)->format('H:i'));
+        $response->assertDontSee($presentAttendance->formatedBreakTime);
+        $response->assertDontSee($presentAttendance->formatedWorkingTime);
 
         // 9. 前月の勤怠一覧に前月の勤怠情報が表示されていることを確認
         $response->assertSee(Carbon::parse($previousClockInTime)->format('Y/m'));
         $response->assertSee(Carbon::parse($previousClockInTime)->translatedFormat('m/d(D)'));
         $response->assertSee(Carbon::parse($previousClockInTime)->format('H:i'));
         $response->assertSee(Carbon::parse($previousClockOutTime)->format('H:i'));
+        $response->assertSee($previousAttendance->formatedBreakTime);
+        $response->assertSee($previousAttendance->formatedWorkingTime);
     }
 
     /**
@@ -224,7 +257,7 @@ class AttendanceIndexTest extends TestCase
         Carbon::setLocale('ja');
         Carbon::setTestNow($testTime);
 
-        // 4. テスト月の出退勤時刻をDBに保存
+        // 4-1. テスト月の出退勤時刻をDBに保存
         $presentClockInTime = '2026-02-15 09:00:00';
         $presentClockOutTime = '2026-02-15 17:00:00';
         $presentData = [
@@ -233,21 +266,36 @@ class AttendanceIndexTest extends TestCase
             'clock_in_at' => Carbon::parse($presentClockInTime),
             'clock_out_at' => Carbon::parse($presentClockOutTime),
         ];
-        Attendance::create($presentData);
+        $presentAttendance = Attendance::create($presentData);
+
+        // 4-2. テスト月の休憩情報をDBに保存
+        $presentBreakData = [
+            'break_start_at' => '2026-02-15 10:00:00',
+            'break_end_at' => '2026-02-15 10:15:00',
+        ];
+        $presentAttendance->breaks()->create($presentBreakData);
+
 
         // 5. 翌月の日時を設定
         $nextTime = '2026-03-15 09:00:00';
         $nextClockInTime = '2026-03-15 09:01:00';
         $nextClockOutTime = '2026-03-15 17:01:00';
 
-        // 6. 翌月の出退勤時刻をDBに保存
+        // 6-1. 翌月の出退勤時刻をDBに保存
         $nextData = [
             'user_id' => $user->id,
             'work_date' => Carbon::parse($nextTime)->toDateString(),
             'clock_in_at' => Carbon::parse($nextClockInTime),
             'clock_out_at' => Carbon::parse($nextClockOutTime),
         ];
-        Attendance::create($nextData);
+        $nextAttendance = Attendance::create($nextData);
+
+        // 6-2. 翌月の休憩情報をDBに保存
+        $nextBreakData = [
+            'break_start_at' => '2026-03-15 10:00:00',
+            'break_end_at' => '2026-03-15 10:16:00',
+        ];
+        $nextAttendance->breaks()->create($nextBreakData);
 
         // 7. 勤怠一覧画面を表示
         $response = $this->actingAs($user)->get('/attendance/list/?month=2026-02');
@@ -263,12 +311,16 @@ class AttendanceIndexTest extends TestCase
         $response->assertDontSee(Carbon::parse($presentClockInTime)->translatedFormat('m/d(D)'));
         $response->assertDontSee(Carbon::parse($presentClockInTime)->format('H:i'));
         $response->assertDontSee(Carbon::parse($presentClockOutTime)->format('H:i'));
+        $response->assertDontSee($presentAttendance->formatedBeakTime);
+        $response->assertDontSee($presentAttendance->formatedWorkingTime);
 
         // 9. 翌月の勤怠一覧に翌月の勤怠情報が表示されていることを確認
         $response->assertSee(Carbon::parse($nextClockInTime)->format('Y/m'));
         $response->assertSee(Carbon::parse($nextClockInTime)->translatedFormat('m/d(D)'));
         $response->assertSee(Carbon::parse($nextClockInTime)->format('H:i'));
         $response->assertSee(Carbon::parse($nextClockOutTime)->format('H:i'));
+        $response->assertSee($nextAttendance->formatedBeakTime);
+        $response->assertSee($nextAttendance->formatedWorkingTime);
     }
     /**
      * 「詳細」を押下すると、その日の勤怠詳細画面に遷移することをテスト
@@ -287,7 +339,7 @@ class AttendanceIndexTest extends TestCase
         Carbon::setLocale('ja');
         Carbon::setTestNow($testTime);
 
-        // 4. 出退勤時刻をDBに保存
+        // 4-1. 出退勤時刻をDBに保存
         $clockInTime = '2026-02-15 09:00:00';
         $clockOutTime = '2026-02-15 17:00:00';
         $attendanceData = [
@@ -297,6 +349,14 @@ class AttendanceIndexTest extends TestCase
             'clock_out_at' => Carbon::parse($clockOutTime),
         ];
         $attendance = Attendance::create($attendanceData);
+
+        // 4-2. 休憩時刻をDBに保存
+        $breakData = [
+            'break_start_at' => '2026-02-15 10:00:00',
+            'break_end_at' => '2026-02-15 10:15:00',
+        ];
+        $attendance->breaks()->create($breakData);
+        $attendance->load('breaks');
 
         // 7. 勤怠一覧画面を表示
         $response = $this->actingAs($user)->get('/attendance/list/?month=2026-02');
@@ -309,5 +369,14 @@ class AttendanceIndexTest extends TestCase
 
         // 10. 勤怠詳細画面が表示されていることを確認
         $response->assertSee('勤怠詳細');
+        $response->assertSee($user->name);
+        $response->assertSee($attendance->work_date->format('Y年'));
+        $response->assertSee($attendance->work_date->format('n月j日'));
+        $response->assertSee($attendance->clockInTime);
+        $response->assertSee($attendance->clockOutTime);
+        foreach ($attendance->breaks as $break) {
+            $response->assertSee($break->breakStartTime);
+            $response->assertSee($break->breakEndTime);
+        }
     }
 }
