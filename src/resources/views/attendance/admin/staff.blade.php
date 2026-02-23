@@ -16,7 +16,7 @@
     <div class="present-month-selector">
         <p><a href="/admin/attendance/staff/{{ $user->id }}/?month={{ $prevMonth }}" class="month-pre">←前月</a></p>
         <p class="present-month"><img src="{{asset('images/calendar.png')}}" alt="" class="calender-img">{{ $yearMonth }}</p>
-        <p><a href="/admin/attendance/staff/{{ $user->id }}/?month={{ $nextMonth }}" class="month-next">次月→</a></p>
+        <p><a href="/admin/attendance/staff/{{ $user->id }}/?month={{ $nextMonth }}" class="month-next">翌月→</a></p>
     </div>
 
     <div class="attendance-list-content">
