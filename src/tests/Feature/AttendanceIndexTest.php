@@ -253,7 +253,7 @@ class AttendanceIndexTest extends TestCase
         $response = $this->actingAs($user)->get('/attendance/list/?month=2026-02');
 
         // 8. 勤怠一覧画面に前月のリンクが存在することを確認
-        $response->assertSee('<a href="/attendance/list?month=2026-03" class="month-next">次月→</a>', false);
+        $response->assertSee('<a href="/attendance/list?month=2026-03" class="month-next">翌月→</a>', false);
 
         // 8. 翌月の勤怠一覧を表示
         $response = $this->actingAs($user)->get('/attendance/list/?month=2026-03');
