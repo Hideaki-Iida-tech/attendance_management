@@ -2,7 +2,6 @@
 
 namespace App\Http\Responses;
 
-use Illuminate\Http\Request;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
 
 class LoginResponse implements LoginResponseContract
@@ -18,7 +17,7 @@ class LoginResponse implements LoginResponseContract
      * - 管理者権限を持つユーザーは管理画面へ遷移させる。
      * - それ以外のユーザーは一般ユーザー向け勤怠画面へ遷移させる。
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Http\Request $request
      * @return \Symfony\Component\HttpFoundation\Response
      */
     public function toResponse($request)
