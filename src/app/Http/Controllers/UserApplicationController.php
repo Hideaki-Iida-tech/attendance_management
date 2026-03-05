@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ApplicationStatus;
 use App\Http\Requests\UserApplicationIndexRequest;
 use App\Models\AttendanceChangeRequest;
-use App\Enums\ApplicationStatus;
 
 class UserApplicationController extends Controller
 {

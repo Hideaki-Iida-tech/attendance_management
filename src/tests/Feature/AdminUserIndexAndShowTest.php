@@ -28,7 +28,7 @@ class AdminUserIndexAndShowTest extends TestCase
         $users = User::where('role', UserRole::USER)->get();
 
         // 2. 管理者ユーザーのインスタンスを取得
-        $adminUser = User::where('email', 'admin@example.com')->first();
+        $adminUser = User::where('email', 'admin@example.com')->firstOrFail();
 
         // 3. スタッフ一覧ページを開く
         $response = $this->actingAs($adminUser)->get('/admin/staff/list');
@@ -131,7 +131,7 @@ class AdminUserIndexAndShowTest extends TestCase
         Carbon::setTestNow($testTime);
 
         // 8. 管理者ユーザーのインスタンスを取得
-        $adminUser = User::where('email', 'admin@example.com')->first();
+        $adminUser = User::where('email', 'admin@example.com')->firstOrFail();
 
         // 9. スタッフ一覧ページを開く
         $response = $this->actingAs($adminUser)->get('/admin/staff/list');
@@ -162,6 +162,9 @@ class AdminUserIndexAndShowTest extends TestCase
         $response->assertDontSee($otherUserAttendance->clockOutTime);
         $response->assertDontSee($otherUserAttendance->formatedBreakTime);
         $response->assertDontSee($otherUserAttendance->formatedWorkingTime);
+
+        // 15. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 「前月」を押下した時に表示月の前月の情報が表示されることをテスト
@@ -250,7 +253,7 @@ class AdminUserIndexAndShowTest extends TestCase
         $attendances[2]->breaks()->create($breaksData);
 
         // 7. 管理者ユーザーのインスタンスを取得
-        $adminUser = User::where('email', 'admin@example.com')->first();
+        $adminUser = User::where('email', 'admin@example.com')->firstOrFail();
 
         // 8. スタッフ一覧ページを開く
         $response = $this->actingAs($adminUser)->get('/admin/staff/list');
@@ -302,6 +305,9 @@ class AdminUserIndexAndShowTest extends TestCase
         $response->assertDontSee($currentMonthAttendance->clockOutTime);
         $response->assertDontSee($currentMonthAttendance->formatedBreakTime);
         $response->assertDontSee($currentMonthAttendance->formatedWoringTime);
+
+        // 18. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 「翌月」を押下した時に表示月の翌月の情報が表示されることをテスト
@@ -390,7 +396,7 @@ class AdminUserIndexAndShowTest extends TestCase
         $attendances[2]->breaks()->create($breaksData);
 
         // 7. 管理者ユーザーのインスタンスを取得
-        $adminUser = User::where('email', 'admin@example.com')->first();
+        $adminUser = User::where('email', 'admin@example.com')->firstOrFail();
 
         // 8. スタッフ一覧ページを開く
         $response = $this->actingAs($adminUser)->get('/admin/staff/list');
@@ -442,6 +448,9 @@ class AdminUserIndexAndShowTest extends TestCase
         $response->assertDontSee($currentMonthAttendance->clockOutTime);
         $response->assertDontSee($currentMonthAttendance->formatedBreakTime);
         $response->assertDontSee($currentMonthAttendance->formatedWoringTime);
+
+        // 18. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 「詳細」ボタンを押下すると、その日の勤怠詳細画面に遷移することをテスト
@@ -477,40 +486,40 @@ class AdminUserIndexAndShowTest extends TestCase
         $attendance->load('breaks');
         $breaks = $attendance->breaks()->get();
 
-        // 3. 管理者ユーザーのインスタンスを取得
-        $adminUser = User::where('email', 'admin@example.com')->first();
+        // 4. 管理者ユーザーのインスタンスを取得
+        $adminUser = User::where('email', 'admin@example.com')->firstOrFail();
 
-        // 4. スタッフ一覧ページを開く
+        // 5. スタッフ一覧ページを開く
         $response = $this->actingAs($adminUser)->get('/admin/staff/list');
 
-        // 5. 選択すべき一般ユーザーの「氏名」「メールアドレス」「詳細」リンクが表示されていることを確認
+        // 6. 選択すべき一般ユーザーの「氏名」「メールアドレス」「詳細」リンクが表示されていることを確認
         $response->assertSee($user->name);
         $response->assertSee($user->email);
         $response->assertSee('<a href="/admin/attendance/staff/'
             . $user->id . '" class="detail-link">詳細</a>', false);
 
-        // 6. 「詳細」リンクをクリック
+        // 7. 「詳細」リンクをクリック
         $response = $this->actingAs($adminUser)->get('/admin/attendance/staff/' . $user->id);
 
-        // 7. 選択したユーザー（テストユーザー1）の名前を含むタイトルが表示されていることを確認
+        // 8. 選択したユーザー（テストユーザー1）の名前を含むタイトルが表示されていることを確認
         $response->assertSee('<h1 class="attendance-list-title-inner">'
             . $user->name . 'さんの勤怠</h1>', false);
 
-        // 8. 選択したユーザー（テストユーザー1）の当月の勤怠データが表示されていることを確認
+        // 9. 選択したユーザー（テストユーザー1）の当月の勤怠データが表示されていることを確認
         $response->assertSee($attendance->work_date->translatedFormat('m/d(D)'));
         $response->assertSee($attendance->clockInTime);
         $response->assertSee($attendance->clockOutTime);
         $response->assertSee($attendance->formatedBreakTime);
         $response->assertSee($attendance->formatedWoringTime);
 
-        // 9. 選択したユーザー（テストユーザー1）について登録されている勤怠情報の「詳細」リンクが表示されていることを確認
+        // 10. 選択したユーザー（テストユーザー1）について登録されている勤怠情報の「詳細」リンクが表示されていることを確認
         $response->assertSee('<a href="/attendance/' . $attendance->id
             . '" class="detail-link">詳細</a>', false);
 
-        // 10. 「詳細」リンクをクリック
+        // 11. 「詳細」リンクをクリック
         $response = $this->actingAs($adminUser)->get('/attendance/' . $attendance->id);
 
-        // 11. 登録した勤怠データ詳細が表示されていることを確認
+        // 12. 登録した勤怠データ詳細が表示されていることを確認
         $response->assertSee('勤怠詳細');
         $response->assertSee($user->name); // 一般ユーザー名
         $response->assertSee($attendance->work_date->format('Y年')); // 年
@@ -521,5 +530,8 @@ class AdminUserIndexAndShowTest extends TestCase
             $response->assertSee($break->breakStartTime); // 休憩開始時刻
             $response->assertSee($break->breakEndTime); // 休憩終了時刻
         }
+
+        // 13. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
 }

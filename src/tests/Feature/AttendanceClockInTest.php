@@ -53,6 +53,9 @@ class AttendanceClockInTest extends TestCase
                 'clock_in_at' => $testTime,
             ]
         );
+
+        // 8. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
 
     /**
@@ -119,5 +122,8 @@ class AttendanceClockInTest extends TestCase
         // 8. 勤怠一覧画面から出勤の日付、時刻を確認
         $response->assertSee(Carbon::parse($testTime)->translatedFormat('m/d(D)'));
         $response->assertSee(Carbon::parse($testTime)->format('H:i'));
+
+        // 9. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
 }

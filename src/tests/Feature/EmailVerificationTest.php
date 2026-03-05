@@ -37,24 +37,24 @@ class EmailVerificationTest extends TestCase
             'password_confirmation' => 'password123',
         ];
 
-        // 通知をテスト用に差し替え
+        // 3. 通知をテスト用に差し替え
         Notification::fake();
 
-        // 3. 登録ボタンを押す
+        // 4. 登録ボタンを押す
         $response = $this->followingRedirects()->post('/register', $formData);
         $response->assertStatus(200);
-        // 4. メール認証誘導画面へ遷移していることを確認 
+        // 5. メール認証誘導画面へ遷移していることを確認 
         $response->assertViewIs('auth.verify-email');
 
-        // 5. バリデーションエラーがないことを確認
+        // 6. バリデーションエラーがないことを確認
         $response->assertSessionHasNoErrors();
 
-        // 6. ログイン状態であること
+        // 7. ログイン状態であること
         $user = User::where('email', 'test11@example.com')->firstOrFail();
         $this->assertNotNull($user);
         $this->assertAuthenticatedAs($user);
 
-        // 7. 認証メールが送信されていることを確認
+        // 8. 認証メールが送信されていることを確認
         Notification::assertSentTo($user, VerifyEmail::class);
     }
     /**

@@ -41,19 +41,22 @@ class AttendanceBreakTest extends TestCase
         // 6. 「出勤中」とステータスが表示されていることを確認
         $response->assertSee('出勤中');
 
-        // 5. 「休憩入」ボタンが表示されていることを確認
+        // 7. 「休憩入」ボタンが表示されていることを確認
         $response->assertSee('<button class="attendance-button-break-start" name="action" value="break_start">
                 休憩入
             </button>', false);
 
-        // 6. 休憩開始処理を行う
+        // 8. 休憩開始処理を行う
         $this->actingAs($user)->post('/attendance', ['action' => 'break_start']);
 
-        // 7. DBに登録されていることを確認
+        // 9. DBに登録されていることを確認
         $this->assertDatabaseHas(
             'breaks',
             ['break_start_at' => $testTime]
         );
+
+        // 10. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 休憩は一日に何回もできることをテスト
@@ -103,6 +106,9 @@ class AttendanceBreakTest extends TestCase
         $response->assertSee('<button class="attendance-button-break-start" name="action" value="break_start">
                 休憩入
             </button>', false);
+
+        // 13. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 休憩戻ボタンが正しく機能することをテスト
@@ -150,6 +156,9 @@ class AttendanceBreakTest extends TestCase
             'breaks',
             ['break_end_at' => $testTime]
         );
+
+        // 12. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 休憩戻は一日に何回もできることをテスト
@@ -210,6 +219,9 @@ class AttendanceBreakTest extends TestCase
         $response->assertSee('<button class="attendance-button-break-end" name="action" value="break_end">
                 休憩戻
             </button>', false);
+
+        // 16. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 休憩時刻が勤怠一覧画面で確認できるテスト
@@ -273,5 +285,8 @@ class AttendanceBreakTest extends TestCase
 
         $expected = sprintf('%d:%02d', intdiv($minutes, 60), $minutes % 60);
         $response->assertSee($expected);
+
+        // 15. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
 }

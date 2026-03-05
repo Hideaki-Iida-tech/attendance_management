@@ -33,36 +33,39 @@ class UserLoginValidationTest extends TestCase
         ];
         $response = $this->post('/register', $formData);
 
-        $logoutResponse = $this->post('/logout');
-
         // 2. リダイレクトされることを確認
         $response->assertStatus(302);
         $response->assertRedirect('/attendance');
 
-        // 3. ログイン画面を表示
+        // 3. ログアウト
+        $logoutResponse = $this->post('/logout');
+        $logoutResponse->assertStatus(302);
+        $logoutResponse->assertRedirect('/');
+
+        // 4. ログイン画面を表示
         $response = $this->get('/login');
         $response->assertStatus(200);
 
-        // 4. メールアドレスを入力せずパスワードのみ入力
+        // 5. メールアドレスを入力せずパスワードのみ入力
         $formData = [
             'login_context' => 'user',
             'email' => '',
             'password' => 'password123',
         ];
 
-        // 5. ログインボタンを押す
+        // 6. ログインボタンを押す
         $response = $this->post('/login', $formData);
 
-        // 6. バリデーションエラーが発生することを確認
+        // 7. バリデーションエラーが発生することを確認
         $response->assertSessionHasErrors(['email']);
         $response->assertSessionDoesntHaveErrors(['password']);
         $response->assertSessionDoesntHaveErrors(['login_context']);
 
-        // 7. リダイレクトすることを確認
+        // 8. リダイレクトすることを確認
         $response->assertStatus(302);
         $response->assertRedirect('/login');
 
-        // 8. エラーメッセージがセッションに入っているか確認
+        // 9. エラーメッセージがセッションに入っているか確認
         $this->assertTrue(session()->has('errors'));
         $this->assertEquals(
             session('errors')->first('email'),
@@ -86,36 +89,39 @@ class UserLoginValidationTest extends TestCase
         ];
         $response = $this->post('/register', $formData);
 
-        $logoutResponse = $this->post('/logout');
-
         // 2. リダイレクトされることを確認
         $response->assertStatus(302);
         $response->assertRedirect('/attendance');
 
-        // 3. ログイン画面を表示
+        // 3. ログアウト
+        $logoutResponse = $this->post('/logout');
+        $logoutResponse->assertStatus(302);
+        $logoutResponse->assertRedirect('/');
+
+        // 4. ログイン画面を表示
         $response = $this->get('/login');
         $response->assertStatus(200);
 
-        // 4. メールアドレスのみ入力し、パスワードは未入力
+        // 5. メールアドレスのみ入力し、パスワードは未入力
         $formData = [
             'login_context' => 'user',
             'email' => 'test11@example.com',
             'password' => '',
         ];
 
-        // 5. ログインボタンを押す
+        // 6. ログインボタンを押す
         $response = $this->post('/login', $formData);
 
-        // 6. バリデーションエラーが発生することを確認
+        // 7. バリデーションエラーが発生することを確認
         $response->assertSessionHasErrors(['password']);
         $response->assertSessionDoesntHaveErrors(['email']);
         $response->assertSessionDoesntHaveErrors(['login_context']);
 
-        // 7. リダイレクトすることを確認
+        // 8. リダイレクトすることを確認
         $response->assertStatus(302);
         $response->assertRedirect('/login');
 
-        // 8. エラーメッセージがセッションに入っているか確認
+        // 9. エラーメッセージがセッションに入っているか確認
         $this->assertTrue(session()->has('errors'));
         $this->assertEquals(
             session('errors')->first('password'),
@@ -140,36 +146,39 @@ class UserLoginValidationTest extends TestCase
         ];
         $response = $this->post('/register', $formData);
 
-        $logoutResponse = $this->post('/logout');
-
         // 2. リダイレクトされることを確認
         $response->assertStatus(302);
         $response->assertRedirect('/attendance');
 
-        // 3. ログイン画面を表示
+        // 3. ログアウト
+        $logoutResponse = $this->post('/logout');
+        $logoutResponse->assertStatus(302);
+        $logoutResponse->assertRedirect('/');
+
+        // 4. ログイン画面を表示
         $response = $this->get('/login');
         $response->assertStatus(200);
 
-        // 4. 間違った入力情報を入力
+        // 5. 間違った入力情報を入力
         $formData = [
             'login_context' => 'user',
             'email' => 'test111@example.com',
             'password' => 'password1234',
         ];
 
-        // 5. ログインボタンを押す
+        // 6. ログインボタンを押す
         $response = $this->post('/login', $formData);
 
-        // 6. バリデーションエラーが発生することを確認
+        // 7. バリデーションエラーが発生することを確認
         $response->assertSessionHasErrors(['email']);
         $response->assertSessionDoesntHaveErrors(['password']);
         $response->assertSessionDoesntHaveErrors(['login_context']);
 
-        // 7. リダイレクトすることを確認
+        // 8. リダイレクトすることを確認
         $response->assertStatus(302);
         $response->assertRedirect('/login');
 
-        // 8. エラーメッセージがセッションに入っているか確認
+        // 9. エラーメッセージがセッションに入っているか確認
         $this->assertTrue(session()->has('errors'));
         $this->assertEquals(
             session('errors')->first('email'),

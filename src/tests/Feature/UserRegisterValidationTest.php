@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 
@@ -33,7 +33,7 @@ class UserRegisterValidationTest extends TestCase
             'name' => '',
             'email' => 'test11@example.com',
             'password' => 'password123',
-            'password_confirmation' => 'password1230,'
+            'password_confirmation' => 'password123'
         ];
 
         // 3. 登録ボタンを押す （=POST /register）
@@ -41,6 +41,9 @@ class UserRegisterValidationTest extends TestCase
 
         // 4. バリデーションエラーが発生することを確認
         $response->assertSessionHasErrors(['name']);
+        $response->assertSessionDoesntHaveErrors(['email']);
+        $response->assertSessionDoesntHaveErrors(['password']);
+        $response->assertSessionDoesntHaveErrors(['password_confirmation']);
 
         // 5. リダイレクトされることを確認
         $response->assertStatus(302);
@@ -80,6 +83,9 @@ class UserRegisterValidationTest extends TestCase
 
         // 4. バリデーションエラーが発生することを確認
         $response->assertSessionHasErrors(['email']);
+        $response->assertSessionDoesntHaveErrors(['name']);
+        $response->assertSessionDoesntHaveErrors(['password']);
+        $response->assertSessionDoesntHaveErrors(['password_confirmation']);
 
         // 5 リダイレクトされることを確認
         $response->assertStatus(302);
@@ -117,6 +123,9 @@ class UserRegisterValidationTest extends TestCase
 
         // 4. バリデーションエラーが発生することを確認
         $response->assertSessionHasErrors(['password']);
+        $response->assertSessionDoesntHaveErrors(['name']);
+        $response->assertSessionDoesntHaveErrors(['email']);
+        $response->assertSessionDoesntHaveErrors(['password_confirmation']);
 
         // 5. リダイレクトされることを確認
         $response->assertStatus(302);
@@ -157,6 +166,9 @@ class UserRegisterValidationTest extends TestCase
 
         // 4. バリデーションエラーが発生することを確認
         $response->assertSessionHasErrors(['password']);
+        $response->assertSessionDoesntHaveErrors(['name']);
+        $response->assertSessionDoesntHaveErrors(['email']);
+        $response->assertSessionDoesntHaveErrors(['password_confirmation']);
 
         // 5. リダイレクトされることを確認
         $response->assertStatus(302);
@@ -197,6 +209,9 @@ class UserRegisterValidationTest extends TestCase
 
         // 4. バリデーションエラーが発生することを確認
         $response->assertSessionHasErrors(['password']);
+        $response->assertSessionDoesntHaveErrors(['name']);
+        $response->assertSessionDoesntHaveErrors(['email']);
+        $response->assertSessionDoesntHaveErrors(['password_confirmation']);
 
         // 5. リダイレクトされることを確認
         $response->assertStatus(302);
