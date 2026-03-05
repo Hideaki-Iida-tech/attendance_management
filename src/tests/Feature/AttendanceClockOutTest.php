@@ -56,6 +56,9 @@ class AttendanceClockOutTest extends TestCase
                 'clock_out_at' => $testTime,
             ]
         );
+
+        // 9. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 退勤時刻が勤怠一覧画面で確認できることをテスト
@@ -106,5 +109,8 @@ class AttendanceClockOutTest extends TestCase
         // 12. 勤怠一覧画面から退勤の日付、時刻を確認
         $response->assertSee(Carbon::parse($clockOutTime)->translatedFormat('m/d(D)'));
         $response->assertSee(Carbon::parse($clockOutTime)->format('H:i'));
+
+        // 13. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
 }

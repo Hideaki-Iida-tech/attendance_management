@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ApplicationStatus;
+use App\Enums\ActionType;
 use App\Http\Requests\AdminAttendanceIndexRequest;
 use App\Http\Requests\AdminAttendanceUpdateRequest;
 use App\Http\Requests\AdminStaffMonthlyAttendanceIndexRequest;
 use App\Models\Attendance;
-use App\Models\User;
 use App\Models\AttendanceChangeRequest;
-use App\Enums\ApplicationStatus;
-use App\Enums\ActionType;
+use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;

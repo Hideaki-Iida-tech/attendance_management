@@ -53,6 +53,9 @@ class AttendanceShowTest extends TestCase
 
         // 7. 「名前」がログインユーザーの名前になっていることを確認
         $response->assertSee($name);
+
+        // 8. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 勤怠詳細画面の「日付」が選択した日付になっていることをテスト
@@ -88,6 +91,9 @@ class AttendanceShowTest extends TestCase
         // 6. 「日付」が選択した日付になっていることを確認
         $response->assertSee($attendance->work_date->format('Y年'));
         $response->assertSee($attendance->work_date->format('n月j日'));
+
+        // 7. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 「出勤・退勤」にて記されている時間がログインユーザーの打刻と一致していることをテスト
@@ -123,6 +129,9 @@ class AttendanceShowTest extends TestCase
         // 6. 「出勤」「退勤」が一致していることを確認
         $response->assertSee($attendance->clock_in_at->format('H:i'));
         $response->assertSee($attendance->clock_out_at->format('H:i'));
+
+        // 7. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 「休憩」にて記されている時間がログインユーザーの打刻と一致していることを確認
@@ -152,8 +161,6 @@ class AttendanceShowTest extends TestCase
         ];
         $attendance = Attendance::create($attendanceData);
 
-
-
         // 5. 休憩開始・終了時刻をDBに保存
         $cases = [
             [
@@ -181,5 +188,8 @@ class AttendanceShowTest extends TestCase
             $response->assertSee(Carbon::parse($case['break_start_at'])->format('H:i'));
             $response->assertSee(Carbon::parse($case['break_end_at'])->format('H:i'));
         }
+
+        // 8. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
 }

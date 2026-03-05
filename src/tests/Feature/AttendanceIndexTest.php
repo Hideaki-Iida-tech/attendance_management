@@ -129,7 +129,7 @@ class AttendanceIndexTest extends TestCase
         $workingEnd = Carbon::parse($anotherClockOutTime);
 
         $breakMinutes = $breakStart->diffInMinutes($breakEnd);
-        $workingMinute = $workingStart->diffInMinutes($workingEnd);
+        $workingMinutes = $workingStart->diffInMinutes($workingEnd);
 
         $workingMinutes = $workingMinutes - $breakMinutes;
 
@@ -138,6 +138,9 @@ class AttendanceIndexTest extends TestCase
 
         $response->assertDontSee($breakExpected);
         $response->assertDontSee($workingExpected);
+
+        // 14. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
 
     /**
@@ -231,13 +234,16 @@ class AttendanceIndexTest extends TestCase
         $response->assertDontSee($presentAttendance->formatedBreakTime);
         $response->assertDontSee($presentAttendance->formatedWorkingTime);
 
-        // 9. 前月の勤怠一覧に前月の勤怠情報が表示されていることを確認
+        // 10. 前月の勤怠一覧に前月の勤怠情報が表示されていることを確認
         $response->assertSee(Carbon::parse($previousClockInTime)->format('Y/m'));
         $response->assertSee(Carbon::parse($previousClockInTime)->translatedFormat('m/d(D)'));
         $response->assertSee(Carbon::parse($previousClockInTime)->format('H:i'));
         $response->assertSee(Carbon::parse($previousClockOutTime)->format('H:i'));
         $response->assertSee($previousAttendance->formatedBreakTime);
         $response->assertSee($previousAttendance->formatedWorkingTime);
+
+        // 11. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
 
     /**
@@ -303,10 +309,10 @@ class AttendanceIndexTest extends TestCase
         // 8. 勤怠一覧画面に前月のリンクが存在することを確認
         $response->assertSee('<a href="/attendance/list?month=2026-03" class="month-next">翌月→</a>', false);
 
-        // 8. 翌月の勤怠一覧を表示
+        // 9. 翌月の勤怠一覧を表示
         $response = $this->actingAs($user)->get('/attendance/list/?month=2026-03');
 
-        // 9. 翌月の勤怠一覧に今月の勤怠情報が表示されていないことを確認
+        // 10. 翌月の勤怠一覧に今月の勤怠情報が表示されていないことを確認
         $response->assertDontSee(Carbon::parse($presentClockInTime)->format('Y/m'));
         $response->assertDontSee(Carbon::parse($presentClockInTime)->translatedFormat('m/d(D)'));
         $response->assertDontSee(Carbon::parse($presentClockInTime)->format('H:i'));
@@ -314,13 +320,16 @@ class AttendanceIndexTest extends TestCase
         $response->assertDontSee($presentAttendance->formatedBeakTime);
         $response->assertDontSee($presentAttendance->formatedWorkingTime);
 
-        // 9. 翌月の勤怠一覧に翌月の勤怠情報が表示されていることを確認
+        // 11. 翌月の勤怠一覧に翌月の勤怠情報が表示されていることを確認
         $response->assertSee(Carbon::parse($nextClockInTime)->format('Y/m'));
         $response->assertSee(Carbon::parse($nextClockInTime)->translatedFormat('m/d(D)'));
         $response->assertSee(Carbon::parse($nextClockInTime)->format('H:i'));
         $response->assertSee(Carbon::parse($nextClockOutTime)->format('H:i'));
         $response->assertSee($nextAttendance->formatedBeakTime);
         $response->assertSee($nextAttendance->formatedWorkingTime);
+
+        // 12. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 「詳細」を押下すると、その日の勤怠詳細画面に遷移することをテスト
@@ -358,16 +367,16 @@ class AttendanceIndexTest extends TestCase
         $attendance->breaks()->create($breakData);
         $attendance->load('breaks');
 
-        // 7. 勤怠一覧画面を表示
+        // 5. 勤怠一覧画面を表示
         $response = $this->actingAs($user)->get('/attendance/list/?month=2026-02');
 
-        // 8. 該当の勤怠レコードの「詳細」リンクが表示されていることを確認
+        // 6. 該当の勤怠レコードの「詳細」リンクが表示されていることを確認
         $response->assertSee('<a href="/attendance/' . $attendance->id . '" class="detail-link">詳細</a>', false);
 
-        // 9. 「詳細」リンクをクリック
+        // 7. 「詳細」リンクをクリック
         $response = $this->actingAs($user)->get('/attendance/' . $attendance->id);
 
-        // 10. 勤怠詳細画面が表示されていることを確認
+        // 8. 勤怠詳細画面が表示されていることを確認
         $response->assertSee('勤怠詳細');
         $response->assertSee($user->name);
         $response->assertSee($attendance->work_date->format('Y年'));
@@ -378,5 +387,8 @@ class AttendanceIndexTest extends TestCase
             $response->assertSee($break->breakStartTime);
             $response->assertSee($break->breakEndTime);
         }
+
+        // 9. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
 }

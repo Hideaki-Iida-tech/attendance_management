@@ -1043,33 +1043,33 @@ class AdminAttendanceUpdateTest extends TestCase
             $changeRequest->breaks()->create($changedBreak);
         }
 
-        // 5. 管理者ユーザーのインスタンスを取得
+        // 8. 管理者ユーザーのインスタンスを取得
         $adminUser = User::where('email', 'admin@example.com')->firstOrFail();
 
-        // 6. 申請一覧画面（管理者）を開く
+        // 9. 申請一覧画面（管理者）を開く
         $response = $this->actingAs($adminUser)->get('/stamp_correction_request/list');
 
-        // 7. 「詳細」リンクが表示されていることを確認
+        // 10. 「詳細」リンクが表示されていることを確認
         $response->assertSee('<a href="/stamp_correction_request/approve/'
             . $changeRequest->id . '" class="detail-link">詳細</a>', false);
 
-        // 8. 修正申請承認画面（管理者）を開く
+        // 11. 修正申請承認画面（管理者）を開く
         $response = $this->actingAs($adminUser)
             ->get('/stamp_correction_request/approve/' . $changeRequest->id);
 
-        // 9. 「承認」ボタンが表示されていることを確認
+        // 12. 「承認」ボタンが表示されていることを確認
         $response->assertSee(
             '<button type="submit" name="submit" class="approve-button">承認</button>',
             false
         );
 
-        // 10. 「承認」ボタンを押下
+        // 13. 「承認」ボタンを押下
         $response = $this->actingAs($adminUser)
             ->post('/stamp_correction_request/approve/' . $changeRequest->id);
         $response->assertStatus(302);
         $response->assertRedirect('/stamp_correction_request/approve/' . $changeRequest->id);
 
-        // 11. attendance_changer_requstsテーブルの該当レコードが承認済みになっていることを確認
+        // 14. attendance_changer_requstsテーブルの該当レコードが承認済みになっていることを確認
         $this->assertDatabaseHas(
             'attendance_change_requests',
             [
@@ -1078,7 +1078,7 @@ class AdminAttendanceUpdateTest extends TestCase
             ]
         );
 
-        // 12. attendancesテーブル、breaksテーブルの該当レコードが修正されていることを確認
+        // 15. attendancesテーブル、breaksテーブルの該当レコードが修正されていることを確認
         $this->assertDatabaseHas(
             'attendances',
             [
@@ -1100,7 +1100,7 @@ class AdminAttendanceUpdateTest extends TestCase
             );
         }
 
-        // 13. テスト時刻を現在に戻す
+        // 16. テスト時刻を現在に戻す
         Carbon::setTestNow();
     }
 }

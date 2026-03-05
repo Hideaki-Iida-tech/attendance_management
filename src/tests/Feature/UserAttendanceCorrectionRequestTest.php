@@ -82,6 +82,9 @@ class UserAttendanceCorrectionRequestTest extends TestCase
             session('errors')->first('clock_out_at'),
             '出勤時間もしくは退勤時間が不適切な値です'
         );
+
+        // 12. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
 
     /**
@@ -184,6 +187,9 @@ class UserAttendanceCorrectionRequestTest extends TestCase
             session('errors')->first('breaks.2.start'),
             '休憩時間が不適切な値です'
         );
+
+        // 13. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 休憩終了時間が退勤時間より後ろになっている場合、エラーメッセージが表示されることをテスト
@@ -288,6 +294,9 @@ class UserAttendanceCorrectionRequestTest extends TestCase
             session('errors')->first('breaks.2.end'),
             '休憩時間もしくは退勤時間が不適切な値です'
         );
+
+        // 13. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 備考欄が未入力の場合のエラーメッセージが表示されることをテスト
@@ -351,6 +360,9 @@ class UserAttendanceCorrectionRequestTest extends TestCase
             session('errors')->first('reason'),
             '備考を入力してください'
         );
+
+        // 12. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 修正申請処理が実行されることをテスト
@@ -450,7 +462,7 @@ class UserAttendanceCorrectionRequestTest extends TestCase
 
         // 13. ログインする管理者ユーザーのインスタンスを生成
         $adminUser = User::where('email', 'admin@example.com')
-            ->first();
+            ->firstOrFail();
 
         // 14. 修正申請承認画面（管理者）を開く
         $response = $this->actingAs($adminUser)
@@ -476,6 +488,9 @@ class UserAttendanceCorrectionRequestTest extends TestCase
         $response->assertSee($requestRecord->work_date->format('Y/m/d'));
         $response->assertSee($requestRecord->reason);
         $response->assertSee($requestRecord->created_at->format('Y/m/d'));
+
+        // 18. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
 
     /**
@@ -824,7 +839,7 @@ class UserAttendanceCorrectionRequestTest extends TestCase
 
         // 4-9. 承認処理
         $adminUser = User::where('email', 'admin@example.com')
-            ->first();
+            ->firstOrFail();
         $response = $this->actingAs($adminUser)
             ->post('/stamp_correction_request/approve/' . $requestRecord[3]->id);
 
@@ -883,6 +898,9 @@ class UserAttendanceCorrectionRequestTest extends TestCase
         $response->assertDontSee($requestRecord[3]->work_date->format('Y/m/d'));
         $response->assertDontSee($requestRecord[3]->reason);
         $response->assertDontSee($requestRecord[3]->created_at->format('Y/m/d'));
+
+        // 7. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 「承認済み」に管理者が承認した修正申請が全て表示されていることをテスト
@@ -981,7 +999,7 @@ class UserAttendanceCorrectionRequestTest extends TestCase
 
         // 1-12. 承認処理（ログインユーザーの1件目）
         $adminUser = User::where('email', 'admin@example.com')
-            ->first();
+            ->firstOrFail();
         $response = $this->actingAs($adminUser)
             ->post('/stamp_correction_request/approve/' . $requestRecord[0]->id);
 
@@ -1297,6 +1315,9 @@ class UserAttendanceCorrectionRequestTest extends TestCase
         $response->assertDontSee($requestRecord[3]->work_date->format('Y/m/d'));
         $response->assertDontSee($requestRecord[3]->reason);
         $response->assertDontSee($requestRecord[3]->created_at->format('Y/m/d'));
+
+        // 7. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 各申請の「詳細」画面を押下すると勤怠詳細画面に遷移することをテスト
@@ -1405,6 +1426,7 @@ class UserAttendanceCorrectionRequestTest extends TestCase
 
         // 4. 「詳細」リンクをクリック
         $response = $this->actingAs($user)->get('/attendance/' . $requestRecord->attendance_id);
+
         // 5. 勤怠詳細画面の表示内容を確認
         $response->assertSee($userName);
         $response->assertSee($requestRecord->work_date->format('Y年'));
@@ -1418,5 +1440,8 @@ class UserAttendanceCorrectionRequestTest extends TestCase
         }
         $response->assertSee($requestRecord->reason);
         $response->assertSee('*承認待ちのため修正できません');
+
+        // 6. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
 }

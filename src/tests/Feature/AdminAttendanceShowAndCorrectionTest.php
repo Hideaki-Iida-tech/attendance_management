@@ -52,7 +52,7 @@ class AdminAttendanceShowAndCorrectionTest extends TestCase
         $attendance->load('breaks');
 
         // 2. ログインする管理者ユーザーのインスタンスを取得
-        $adminUser = User::where('email', 'admin@example.com')->first();
+        $adminUser = User::where('email', 'admin@example.com')->firstOrFail();
 
         // 3. 管理者用勤怠一覧画面を開く
         $response = $this->actingAs($adminUser)->get('/admin/attendance/list');
@@ -73,6 +73,9 @@ class AdminAttendanceShowAndCorrectionTest extends TestCase
             $response->assertSee($break->breakStartTime); // 休憩開始時刻
             $response->assertSee($break->breakEndTime); // 休憩終了時刻
         }
+
+        // 7. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 出勤時間が退勤時間より後ろになっている場合、エラーメッセージが表示されることをテスト
@@ -100,7 +103,7 @@ class AdminAttendanceShowAndCorrectionTest extends TestCase
         $attendance = Attendance::create($attendanceData);
 
         // 4. ログインする管理者ユーザーのインスタンスを取得
-        $adminUser = User::where('email', 'admin@example.com')->first();
+        $adminUser = User::where('email', 'admin@example.com')->firstOrFail();
 
         // 5. 管理者用勤怠一覧画面を開く
         $response = $this->actingAs($adminUser)->get('/admin/attendance/list');
@@ -140,6 +143,9 @@ class AdminAttendanceShowAndCorrectionTest extends TestCase
             session('errors')->first('clock_out_at'),
             '出勤時間もしくは退勤時間が不適切な値です'
         );
+
+        // 14. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 出勤開始時間が退勤時間よりも後ろになっている場合、エラーメッセージが表示されることをテスト
@@ -187,7 +193,7 @@ class AdminAttendanceShowAndCorrectionTest extends TestCase
         $breaks = $attendance->breaks()->orderBy('break_start_at', 'asc')->get();
 
         // 5. ログインする管理者ユーザーのインスタンスを取得
-        $adminUser = User::where('email', 'admin@example.com')->first();
+        $adminUser = User::where('email', 'admin@example.com')->firstOrFail();
 
         // 6. 管理者用勤怠一覧画面を開く
         $response = $this->actingAs($adminUser)->get('/admin/attendance/list');
@@ -245,6 +251,9 @@ class AdminAttendanceShowAndCorrectionTest extends TestCase
             session('errors')->first('breaks.2.start'),
             '休憩時間が不適切な値です'
         );
+
+        // 15. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
 
     /**
@@ -293,7 +302,7 @@ class AdminAttendanceShowAndCorrectionTest extends TestCase
         $breaks = $attendance->breaks()->orderBy('break_start_at', 'asc')->get();
 
         // 5. ログインする管理者ユーザーのインスタンスを取得
-        $adminUser = User::where('email', 'admin@example.com')->first();
+        $adminUser = User::where('email', 'admin@example.com')->firstOrFail();
 
         // 6. 管理者用勤怠一覧画面を開く
         $response = $this->actingAs($adminUser)->get('/admin/attendance/list');
@@ -354,6 +363,9 @@ class AdminAttendanceShowAndCorrectionTest extends TestCase
             session('errors')->first('breaks.2.end'),
             '休憩時間もしくは退勤時間が不適切な値です'
         );
+
+        // 15. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 備考欄が未入力の場合のエラーメッセージが表示されることをテスト
@@ -381,7 +393,7 @@ class AdminAttendanceShowAndCorrectionTest extends TestCase
         $attendance = Attendance::create($attendanceData);
 
         // 4. ログインする管理者ユーザーのインスタンスを取得
-        $adminUser = User::where('email', 'admin@example.com')->first();
+        $adminUser = User::where('email', 'admin@example.com')->firstOrFail();
 
         // 5. 管理者用勤怠一覧画面を開く
         $response = $this->actingAs($adminUser)->get('/admin/attendance/list');
@@ -421,5 +433,8 @@ class AdminAttendanceShowAndCorrectionTest extends TestCase
             session('errors')->first('reason'),
             '備考を入力してください'
         );
+
+        // 14. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
 }

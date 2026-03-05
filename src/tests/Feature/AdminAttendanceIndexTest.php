@@ -269,7 +269,7 @@ class AdminAttendanceIndexTest extends TestCase
         $prevAttendance->breaks()->create($breaksData);
 
         // 12. ログインする管理者ユーザーのインスタンスを取得
-        $adminUser = User::where('email', 'admin@example.com')->first();
+        $adminUser = User::where('email', 'admin@example.com')->firstOrFail();
 
         // 13. 管理者用勤怠一覧画面を開く
         $response = $this->actingAs($adminUser)->get('/admin/attendance/list');
@@ -290,6 +290,9 @@ class AdminAttendanceIndexTest extends TestCase
         $response->assertDontSee($prevAttendance->clockInTime);
         $response->assertDontSee($prevAttendance->clockOutTime);
         $response->assertDontSee($prevAttendance->formatedWorkingTime);
+
+        // 16. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
 
     /**
@@ -303,7 +306,7 @@ class AdminAttendanceIndexTest extends TestCase
         Carbon::setTestNow($testTime);
 
         // 2. ログインする管理者ユーザーのインスタンスを取得
-        $adminUser = User::where('email', 'admin@example.com')->first();
+        $adminUser = User::where('email', 'admin@example.com')->firstOrFail();
 
         // 3. 管理者用勤怠一覧画面を開く
         $response = $this->actingAs($adminUser)->get('/admin/attendance/list');
@@ -311,6 +314,9 @@ class AdminAttendanceIndexTest extends TestCase
         // 4. 現在の日付が表示されていることを確認
         $response->assertSee(Carbon::parse($testTime)->format('Y年n月j日') . 'の勤怠');
         $response->assertSee(Carbon::parse($testTime)->format('Y/m/d'));
+
+        // 5. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 「前日」を押下した時に前の日の勤怠情報が表示されることをテスト
@@ -365,7 +371,7 @@ class AdminAttendanceIndexTest extends TestCase
         $prevAttendance->breaks()->create($breaksData);
 
         // 3. ログインする管理者ユーザーのインスタンスを取得
-        $adminUser = User::where('email', 'admin@example.com')->first();
+        $adminUser = User::where('email', 'admin@example.com')->firstOrFail();
 
         // 4. 管理者用勤怠一覧画面を開く
         $response = $this->actingAs($adminUser)->get('/admin/attendance/list');
@@ -387,6 +393,9 @@ class AdminAttendanceIndexTest extends TestCase
         $response->assertDontSee($attendance->clockInTime);
         $response->assertDontSee($attendance->clockOutTime);
         $response->assertDontSee($attendance->formatedWorkingTime);
+
+        // 9. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
     /**
      * 「翌日」を押下した時に次の日の勤怠情報が表示されることをテスト
@@ -441,7 +450,7 @@ class AdminAttendanceIndexTest extends TestCase
         $nextAttendance->breaks()->create($breaksData);
 
         // 3. ログインする管理者ユーザーのインスタンスを取得
-        $adminUser = User::where('email', 'admin@example.com')->first();
+        $adminUser = User::where('email', 'admin@example.com')->firstOrFail();
 
         // 4. 管理者用勤怠一覧画面を開く
         $response = $this->actingAs($adminUser)->get('/admin/attendance/list');
@@ -463,5 +472,8 @@ class AdminAttendanceIndexTest extends TestCase
         $response->assertDontSee($attendance->clockInTime);
         $response->assertDontSee($attendance->clockOutTime);
         $response->assertDontSee($attendance->formatedWorkingTime);
+
+        // 9. テスト時刻を現在に戻す
+        Carbon::setTestNow();
     }
 }
