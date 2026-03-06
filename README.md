@@ -135,7 +135,7 @@ users <br>
 `SELECT COUNT(*) FROM attendance_change_requets;`→0 件<br>
 `SELECT COUNT(*) FROM attendance_change_request_items;`→0 件<br>
 `SELECT COUNT(*) FROM breaks;`→ 57件<br>
-`SELECT COUNT(*) FROM break_change_requests;`→0 件<br>
+`SELECT COUNT(*) FROM break_change_request_items;`→0 件<br>
 `SELECT COUNT(*) FROM users;`→11 件<br>
 ＊件数は手動でユーザー登録、出退勤処理、修正申請処理、修正承認処理を行わず、一度だけシーダーを走らせた場合です。<br>
 MySQL コンテナからログアウト
@@ -180,7 +180,7 @@ MySQL コンテナからログアウト<br>
 ## ER 図
 
 このアプリの主要なテーブル構造は以下の通りです。<br>
-![ER 図](/docs/er/attendance_management_er.png)
+![ER 図](docs/er/attendance_management.png)
 
 ## URL 一覧
 
